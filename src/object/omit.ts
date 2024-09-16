@@ -2,10 +2,10 @@
  * A helper to do the minimal amount of work in duplicating an object but omitting some
  * props. This ends up faster than using object ...rest or reduce to filter.
  */
-export function omit<TObj extends Record<string, any>>(
-  obj: TObj,
-  exclusions: (keyof TObj)[],
-): TObj {
+export function omit<TInput extends Record<string, any>, TResult = TInput>(
+  obj: TInput,
+  exclusions: (keyof TInput)[],
+): TResult {
   const result: Record<string, any> = {};
 
   for (const key in obj) {
@@ -14,5 +14,5 @@ export function omit<TObj extends Record<string, any>>(
     }
   }
 
-  return result as TObj;
+  return result as TResult;
 }
