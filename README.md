@@ -184,7 +184,7 @@ Determines whether a given value is of type function.
 **Type:**
 
 ```ts
-function isFunction(value?: any): value is Function;
+function isFunction(value?: any): value is (...args: any[]) => any;
 ```
 
 **Example:**
