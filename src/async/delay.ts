@@ -1,11 +1,10 @@
+/** Options for {@linkcode delay}. */
 export interface DelayOptions {
   /** Signal used to abort the delay. */
   signal?: AbortSignal;
 }
 
-/**
- * Resolve a {@linkcode Promise} after a given amount of milliseconds.
- */
+/** Resolve a {@linkcode Promise} after a given amount of milliseconds. */
 export function delay(ms: number, options: DelayOptions = {}): Promise<void> {
   const { signal } = options;
   if (signal?.aborted) return Promise.reject(signal.reason);
