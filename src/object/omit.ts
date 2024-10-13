@@ -1,7 +1,4 @@
-/**
- * A helper to do the minimal amount of work in duplicating an object but omitting some
- * props. This ends up faster than using object ...rest or reduce to filter.
- */
+/** Creates a new object by omitting the specified properties from the given object. */
 export function omit<T extends Record<string, any>, K extends keyof T>(
   obj: T,
   exclusions: K[],
