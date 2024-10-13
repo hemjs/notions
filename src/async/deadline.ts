@@ -1,5 +1,6 @@
 import { delay } from './delay';
 
+/** Options for {@linkcode deadline}. */
 export interface DeadlineOptions {
   /** Signal used to abort the deadline. */
   signal?: AbortSignal;
