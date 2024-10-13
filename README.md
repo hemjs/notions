@@ -177,6 +177,84 @@ isBoolean(null);
 
 `true` if `value` is a boolean, otherwise `false`.
 
+### `isEmpty`
+
+Determines whether a given value is considered empty.
+
+**Type:**
+
+```ts
+function isEmpty(value?: any): value is EmptyLike;
+```
+
+**Empty Definitions:**
+
+- `null`: Returns `true` when a `null` value is given.
+- `undefined`: Returns `true` when an `undefined` value is given.
+- `boolean`: Returns `true` when the boolean value is `false`.
+- `integer`: Returns `true` when an integer `0` value is given.
+- `float`: Returns `true` when a float `0.0` value is given.
+- `string`: Returns `true` when an empty string `''` is given.
+- `space`: Returns `true` when an string is given which contains only whitespace.
+- `array`: Return `true` when an empty array (`[]`) or an array containing only empty values is given.
+- `object`: Returns `true` when an empty object (`{}`) or an object with all properties being `null`, `undefined`, or empty strings is given.
+
+**Example:**
+
+```ts
+import { isEmpty } from '@hemjs/notions';
+
+// Arrays
+isEmpty([]);
+// => true
+isEmpty([0, false, '', null, undefined]);
+// => true
+isEmpty([1, 'hello', { a: 1 }]);
+// => false
+
+// Objects
+isEmpty({});
+// => true
+isEmpty({ a: null, b: undefined, c: '' });
+// => true
+isEmpty({ a: 1, b: 'hello' });
+// => false
+
+// Strings
+isEmpty('');
+// => true
+isEmpty('  ');
+// => true
+isEmpty('hello');
+// => false
+
+// Other Values
+isEmpty(null);
+// => true
+isEmpty(undefined);
+// => true
+isEmpty(false);
+// => true
+isEmpty(0);
+// => true
+isEmpty(0.0);
+// => true
+isEmpty(true);
+// => false
+isEmpty(1);
+// => false
+isEmpty('hello');
+// => false
+```
+
+**Parameters:**
+
+- `value`: The value to be checked. Can be any data type.
+
+**Returns:**
+
+`true` if `value` is empty, otherwise `false`.
+
 ### `isFunction`
 
 Determines whether a given value is of type function.
