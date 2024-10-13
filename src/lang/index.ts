@@ -10,9 +10,7 @@ export type EmptyObject = Record<Key, null | undefined | ''>;
 /** Represents a value that is considered "empty" in various contexts. */
 export type EmptyLike = Falsy | Array<Falsy> | EmptyObject;
 
-/**
- * Returns `true` if `value` is a boolean, else `false`.
- */
+/** Returns `true` if `value` is a boolean, else `false`. */
 export function isBoolean(value?: any): value is boolean {
   return typeof value === 'boolean';
 }
@@ -55,44 +53,32 @@ export function isEmpty(value?: any): value is EmptyLike {
   }
 }
 
-/**
- * Returns `true` if `value` is a function, else `false`.
- */
+/** Returns `true` if `value` is a function, else `false`. */
 export function isFunction(value?: any): value is (...args: any[]) => any {
   return typeof value === 'function';
 }
 
-/**
- * Returns `true` if `value` is nullish, else `false`.
- */
+/** Returns `true` if `value` is nullish, else `false`. */
 export function isNil(value?: any): value is null | undefined {
   return typeof value === 'undefined' || value === null;
 }
 
-/**
- * Returns `true` if `value` is `null`, else `false`.
- */
+/** Returns `true` if `value` is `null`, else `false`. */
 export function isNull(value?: any): value is null {
   return value === null;
 }
 
-/**
- * Returns `true` if `value` is a number, else `false`.
- */
+/** Returns `true` if `value` is a number, else `false`. */
 export function isNumber(value?: any): value is number {
   return typeof value === 'number';
 }
 
-/**
- * Returns `true` if `value` is an object, else `false`.
- */
+/** Returns `true` if `value` is an object, else `false`. */
 export function isObject(value?: any): value is object {
   return value !== null && typeof value === 'object';
 }
 
-/**
- * Returns `true` if `value` is a plain object, else `false`.
- */
+/** Returns `true` if `value` is a plain object, else `false`. */
 export function isPlainObject(value?: any): value is object {
   if (!isObject(value)) {
     return false;
@@ -116,23 +102,17 @@ export function isPlainObject(value?: any): value is object {
   );
 }
 
-/**
- * Returns `true` if `value` is a string, else `false`.
- */
+/** Returns `true` if `value` is a string, else `false`. */
 export function isString(value?: any): value is string {
   return typeof value === 'string';
 }
 
-/**
- * Returns `true` if `value` is a symbol, else `false`.
- */
+/** Returns `true` if `value` is a symbol, else `false`. */
 export function isSymbol(value?: any): value is symbol {
   return typeof value === 'symbol';
 }
 
-/**
- * Returns `true` if `value` is `undefined`, else `false`.
- */
+/** Returns `true` if `value` is `undefined`, else `false`. */
 export function isUndefined(value?: any): value is undefined {
   return typeof value === 'undefined';
 }
