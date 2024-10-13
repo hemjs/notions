@@ -21,6 +21,7 @@
   - [isUndefined](#isundefined)
 - [Object](#object)
   - [omit](#omit)
+  - [pick](#pick)
 - [License](#license)
 
 ## Installation
@@ -488,6 +489,42 @@ console.log(publicInfo); // Output: { name: 'Alice', city: 'Nairobi' }
 **Returns:**
 
 A new object containing all properties from `obj` except those listed in `exclusions`.
+
+**Notes:**
+
+- Uses a `for...in` loop and direct property assignments for optimal performance.
+
+### `pick`
+
+Creates a new object containing only the specified properties from a source object.
+
+**Type:**
+
+```ts
+function omit<T extends Record<string, any>, K extends keyof T>(
+  obj: T,
+  inclusions: K[],
+): Pick<T, K>;
+```
+
+**Example:**
+
+```ts
+import { pick } from '@hemjs/notions';
+
+const person = { name: 'Alice', age: 30, city: 'Nairobi' };
+const nameAndAge = pick(person, ['name', 'age']);
+console.log(nameAndAge); // Output: { name: 'Alice', age: 30 }
+```
+
+**Parameters:**
+
+- `obj`: The source object from which properties will be copied.
+- `inclusions`: An array of property keys to include in the new object.
+
+**Returns:**
+
+A new object containing only the properties listed in `inclusions` from `obj`.
 
 **Notes:**
 
