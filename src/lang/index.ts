@@ -1,3 +1,15 @@
+/** Describes index keys for any type. */
+export type Key = string | number | symbol;
+
+/** Represents a gamut of "falsy" values. */
+export type Falsy = null | undefined | false | 0 | -0 | 0n | '';
+
+/** Represents an object that is considered "empty". */
+export type EmptyObject = Record<Key, null | undefined | ''>;
+
+/** Represents a value that is considered "empty" in various contexts. */
+export type EmptyLike = Falsy | Array<Falsy> | EmptyObject;
+
 /**
  * Returns `true` if `value` is a boolean, else `false`.
  */
@@ -17,7 +29,7 @@ export function isBoolean(value?: any): value is boolean {
  * - **integer:** `0`.
  * - **float:** `0.0`.
  */
-export function isEmpty(value?: any): boolean {
+export function isEmpty(value?: any): value is EmptyLike {
   if (value instanceof Array) {
     value = value.filter((val) => !isEmpty(val));
     return value.length === 0;
