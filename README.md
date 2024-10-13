@@ -465,10 +465,10 @@ Creates a new object with specific properties omitted from a source object.
 **Type:**
 
 ```ts
-function omit<TObj extends Record<string, any>>(
-  obj: TObj,
-  exclusions: (keyof TObj)[],
-): TObj;
+function omit<T extends Record<string, any>, K extends keyof T>(
+  obj: T,
+  exclusions: K[],
+): Omit<T, K>;
 ```
 
 **Example:**
