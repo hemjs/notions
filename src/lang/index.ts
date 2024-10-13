@@ -58,7 +58,7 @@ export function isEmpty(value?: any): value is EmptyLike {
 /**
  * Returns `true` if `value` is a function, else `false`.
  */
-export function isFunction(value?: any): value is Function {
+export function isFunction(value?: any): value is (...args: any[]) => any {
   return typeof value === 'function';
 }
 
