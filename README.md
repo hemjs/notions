@@ -501,7 +501,7 @@ Creates a new object containing only the specified properties from a source obje
 **Type:**
 
 ```ts
-function omit<T extends Record<string, any>, K extends keyof T>(
+function pick<T extends Record<string, any>, K extends keyof T>(
   obj: T,
   inclusions: K[],
 ): Pick<T, K>;
