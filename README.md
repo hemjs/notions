@@ -10,6 +10,7 @@
   - [delay](#delay)
 - [Lang](#lang)
   - [isBoolean](#isboolean)
+  - [isClass](#isclass)
   - [isEmpty](#isempty)
   - [isFunction](#isfunction)
   - [isNil](#isnil)
