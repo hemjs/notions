@@ -1,5 +1,6 @@
 import {
   isBoolean,
+  isClass,
   isEmpty,
   isFunction,
   isNil,
@@ -14,6 +15,8 @@ import {
 
 function Foo() {}
 
+class Bar {}
+
 describe('isBoolean', () => {
   it('should return true when value is a boolean', () => {
     expect(isBoolean(true)).toBe(true);
@@ -23,6 +26,17 @@ describe('isBoolean', () => {
   it('should return false when value is not a boolean', () => {
     expect(isBoolean()).toBe(false);
     expect(isBoolean('abc')).toBe(false);
+  });
+});
+
+describe('isClass', () => {
+  it('should return true when value is a class', () => {
+    expect(isClass(Bar)).toBe(true);
+  });
+
+  it('should return false when value is not a class', () => {
+    expect(isClass(Foo)).toBe(false);
+    expect(isClass(new Bar())).toBe(false);
   });
 });
 

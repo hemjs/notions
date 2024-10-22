@@ -10,9 +10,19 @@ export type EmptyObject = Record<Key, null | undefined | ''>;
 /** Represents a value that is considered "empty" in various contexts. */
 export type EmptyLike = Falsy | Array<Falsy> | EmptyObject;
 
+/** Represents an instantiable class `T` with constructor parameters. */
+export type Class<T, Args extends unknown[] = any[]> = {
+  prototype: Pick<T, keyof T>;
+  new (...args: Args): T;
+};
+
 /** Returns `true` if `value` is a boolean, else `false`. */
 export function isBoolean(value?: any): value is boolean {
   return typeof value === 'boolean';
+}
+
+export function isClass<T = unknown>(value: unknown): value is Class<T> {
+  return typeof value === 'function' && value.toString().startsWith('class ');
 }
 
 /**
