@@ -178,6 +178,39 @@ isBoolean(null);
 
 `true` if `value` is a boolean, otherwise `false`.
 
+### `isClass`
+
+Determines whether a given value is a class.
+
+**Type:**
+
+```ts
+function isClass<T = unknown>(value: unknown): value is Class<T>;
+```
+
+**Example:**
+
+```ts
+import { isClass } from '@hemjs/notions';
+
+class Bar {}
+
+isClass(Bar);
+// => true
+isClass(new Bar());
+// => false
+isClass(0);
+// => false
+```
+
+**Parameters:**
+
+- `value`: The value to be checked. Can be any data type.
+
+**Returns:**
+
+`true` if `value` is a class, otherwise `false`.
+
 ### `isEmpty`
 
 Determines whether a given value is considered empty.

@@ -21,6 +21,7 @@ export function isBoolean(value?: any): value is boolean {
   return typeof value === 'boolean';
 }
 
+/** Returns `true` if `value` is a class, else `false`. */
 export function isClass<T = unknown>(value: unknown): value is Class<T> {
   return typeof value === 'function' && value.toString().startsWith('class ');
 }
