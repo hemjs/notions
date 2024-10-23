@@ -6,7 +6,10 @@ export function omit<T extends Record<string, any>, K extends keyof T>(
   const result: Record<string, any> = {};
 
   for (const key in obj) {
-    if (exclusions.indexOf(key as any) === -1 && obj.hasOwnProperty(key)) {
+    if (
+      exclusions.indexOf(key as any) === -1 &&
+      Object.prototype.hasOwnProperty.call(obj, key)
+    ) {
       result[key] = obj[key];
     }
   }
