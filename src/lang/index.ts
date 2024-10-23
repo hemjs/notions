@@ -17,7 +17,7 @@ export type Class<T, Args extends unknown[] = any[]> = {
 };
 
 /** Returns `true` if `value` is a boolean, else `false`. */
-export function isBoolean(value?: any): value is boolean {
+export function isBoolean(value?: unknown): value is boolean {
   return typeof value === 'boolean';
 }
 
@@ -38,18 +38,18 @@ export function isClass<T = unknown>(value: unknown): value is Class<T> {
  * - **integer:** `0`.
  * - **float:** `0.0`.
  */
-export function isEmpty(value?: any): value is EmptyLike {
+export function isEmpty(value?: unknown): value is EmptyLike {
   if (value instanceof Array) {
     value = value.filter((val) => !isEmpty(val));
-    return value.length === 0;
+    return (value as Array<any>).length === 0;
   } else if (value && typeof value === 'object') {
     for (const key in value) {
       if (
-        value[key] === null ||
-        value[key] === undefined ||
-        value[key] === ''
+        (value as any)[key] === null ||
+        (value as any)[key] === undefined ||
+        (value as any)[key] === ''
       ) {
-        delete value[key];
+        delete (value as any)[key];
       }
     }
     return Object.keys(value).length === 0;
@@ -65,32 +65,32 @@ export function isEmpty(value?: any): value is EmptyLike {
 }
 
 /** Returns `true` if `value` is a function, else `false`. */
-export function isFunction(value?: any): value is (...args: any[]) => any {
+export function isFunction(value?: unknown): value is (...args: any[]) => any {
   return typeof value === 'function';
 }
 
 /** Returns `true` if `value` is nullish, else `false`. */
-export function isNil(value?: any): value is null | undefined {
+export function isNil(value?: unknown): value is null | undefined {
   return typeof value === 'undefined' || value === null;
 }
 
 /** Returns `true` if `value` is `null`, else `false`. */
-export function isNull(value?: any): value is null {
+export function isNull(value?: unknown): value is null {
   return value === null;
 }
 
 /** Returns `true` if `value` is a number, else `false`. */
-export function isNumber(value?: any): value is number {
+export function isNumber(value?: unknown): value is number {
   return typeof value === 'number';
 }
 
 /** Returns `true` if `value` is an object, else `false`. */
-export function isObject(value?: any): value is object {
+export function isObject(value?: unknown): value is object {
   return value !== null && typeof value === 'object';
 }
 
 /** Returns `true` if `value` is a plain object, else `false`. */
-export function isPlainObject(value?: any): value is object {
+export function isPlainObject(value?: unknown): value is object {
   if (!isObject(value)) {
     return false;
   }
@@ -114,16 +114,16 @@ export function isPlainObject(value?: any): value is object {
 }
 
 /** Returns `true` if `value` is a string, else `false`. */
-export function isString(value?: any): value is string {
+export function isString(value?: unknown): value is string {
   return typeof value === 'string';
 }
 
 /** Returns `true` if `value` is a symbol, else `false`. */
-export function isSymbol(value?: any): value is symbol {
+export function isSymbol(value?: unknown): value is symbol {
   return typeof value === 'symbol';
 }
 
 /** Returns `true` if `value` is `undefined`, else `false`. */
-export function isUndefined(value?: any): value is undefined {
+export function isUndefined(value?: unknown): value is undefined {
   return typeof value === 'undefined';
 }
