@@ -2,7 +2,7 @@
 export type Key = string | number | symbol;
 
 /** Represents a gamut of "falsy" values. */
-export type Falsy = null | undefined | false | 0 | -0 | 0n | '';
+export type Falsy = null | undefined | false | 0 | 0n | '';
 
 /** Represents an object that is considered "empty". */
 export type EmptyObject = Record<Key, null | undefined | ''>;
@@ -58,8 +58,8 @@ export function isEmpty(value?: unknown): value is EmptyLike {
   } else {
     return (
       !value ||
-      (value + '').toLocaleLowerCase() === 'null' ||
-      (value + '').toLocaleLowerCase() === 'undefined'
+      ((value as string) + '').toLocaleLowerCase() === 'null' ||
+      ((value as string) + '').toLocaleLowerCase() === 'undefined'
     );
   }
 }

@@ -7,11 +7,11 @@ export interface DelayOptions {
 /** Resolve a {@linkcode Promise} after a given amount of milliseconds. */
 export function delay(ms: number, options: DelayOptions = {}): Promise<void> {
   const { signal } = options;
-  if (signal?.aborted) return Promise.reject(signal.reason);
+  if (signal?.aborted) return Promise.reject(new Error(signal.reason));
   return new Promise((resolve, reject) => {
     const abort = () => {
       clearTimeout(i);
-      reject(signal?.reason);
+      reject(new Error(signal?.reason));
     };
     const done = () => {
       signal?.removeEventListener('abort', abort);
