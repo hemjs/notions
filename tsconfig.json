@@ -7,7 +7,6 @@
     "noLib": false,
     "target": "es6",
     "sourceMap": false,
-    "baseUrl": "./",
     "skipLibCheck": true
   }
 }
