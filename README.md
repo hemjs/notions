@@ -46,7 +46,7 @@ Determines whether a given value is of type boolean.
 **Type:**
 
 ```ts
-function isBoolean(value?: any): value is boolean;
+function isBoolean(value?: unknown): value is boolean;
 ```
 
 **Example:**
@@ -110,7 +110,7 @@ Determines whether a given value is considered empty.
 **Type:**
 
 ```ts
-function isEmpty(value?: any): value is EmptyLike;
+function isEmpty(value?: unknown): value is EmptyLike;
 ```
 
 **Empty Definitions:**
@@ -124,6 +124,10 @@ function isEmpty(value?: any): value is EmptyLike;
 - `space`: Returns `true` when an string is given which contains only whitespace.
 - `array`: Return `true` when an empty array (`[]`) or an array containing only empty values is given.
 - `object`: Returns `true` when an empty object (`{}`) or an object with all properties being `null`, `undefined`, or empty strings is given.
+- `nan`: Returns `true` for `NaN`.
+- `bigint`: Returns `true` for bigint zero (`0n`).
+
+> Non-plain objects (e.g. `Set`, `Map`, `Date`) are never treated as empty.
 
 **Example:**
 
@@ -188,7 +192,7 @@ Determines whether a given value is of type function.
 **Type:**
 
 ```ts
-function isFunction(value?: any): value is (...args: any[]) => any;
+function isFunction(value?: unknown): value is (...args: unknown[]) => unknown;
 ```
 
 **Example:**
@@ -219,7 +223,7 @@ Determines whether a given value is nullish (null or undefined).
 **Type:**
 
 ```ts
-function isNil(value?: any): value is null | undefined;
+function isNil(value?: unknown): value is null | undefined;
 ```
 
 **Example:**
@@ -250,7 +254,7 @@ Determines whether a given value is exactly null.
 **Type:**
 
 ```ts
-function isNull(value?: any): value is null;
+function isNull(value?: unknown): value is null;
 ```
 
 **Example:**
@@ -281,7 +285,7 @@ Determines whether a given value is of type number.
 **Type:**
 
 ```ts
-function isNumber(value?: any): value is number;
+function isNumber(value?: unknown): value is number;
 ```
 
 **Example:**
@@ -312,7 +316,7 @@ Determines whether a given value is of type object (excluding null).
 **Type:**
 
 ```ts
-function isObject(value?: any): value is object;
+function isObject(value?: unknown): value is object;
 ```
 
 **Example:**
@@ -343,7 +347,7 @@ Determines whether a given value is a plain object (i.e., an object without a cu
 **Type:**
 
 ```ts
-function isPlainObject(value?: any): value is object;
+function isPlainObject(value?: unknown): value is object;
 ```
 
 **Example:**
@@ -374,7 +378,7 @@ Determines whether a given value is of type string.
 **Type:**
 
 ```ts
-function isString(value?: any): value is string;
+function isString(value?: unknown): value is string;
 ```
 
 **Example:**
@@ -405,7 +409,7 @@ Determines whether a given value is of type symbol.
 **Type:**
 
 ```ts
-function isSymbol(value?: any): value is symbol;
+function isSymbol(value?: unknown): value is symbol;
 ```
 
 **Example:**
@@ -415,7 +419,7 @@ import { isSymbol } from '@hemjs/notions';
 
 isSymbol(Symbol('hello'));
 // => true
-isString('hello');
+isSymbol('hello');
 // => false
 isSymbol(10);
 // => false
@@ -436,7 +440,7 @@ Determines whether a given value is undefined.
 **Type:**
 
 ```ts
-function isUndefined(value?: any): value is undefined;
+function isUndefined(value?: unknown): value is undefined;
 ```
 
 **Example:**
@@ -469,9 +473,9 @@ Creates a new object with specific properties omitted from a source object.
 **Type:**
 
 ```ts
-function omit<T extends Record<string, any>, K extends keyof T>(
+function omit<T extends Record<string, unknown>, K extends keyof T>(
   obj: T,
-  exclusions: K[],
+  exclusions: readonly K[],
 ): Omit<T, K>;
 ```
 
@@ -494,10 +498,6 @@ console.log(publicInfo); // Output: { name: 'Alice', city: 'Nairobi' }
 
 A new object containing all properties from `obj` except those listed in `exclusions`.
 
-**Notes:**
-
-- Uses a `for...in` loop and direct property assignments for optimal performance.
-
 ### `pick`
 
 Creates a new object containing only the specified properties from a source object.
@@ -505,9 +505,9 @@ Creates a new object containing only the specified properties from a source obje
 **Type:**
 
 ```ts
-function pick<T extends Record<string, any>, K extends keyof T>(
+function pick<T extends Record<string, unknown>, K extends keyof T>(
   obj: T,
-  inclusions: K[],
+  inclusions: readonly K[],
 ): Pick<T, K>;
 ```
 
@@ -529,10 +529,6 @@ console.log(nameAndAge); // Output: { name: 'Alice', age: 30 }
 **Returns:**
 
 A new object containing only the properties listed in `inclusions` from `obj`.
-
-**Notes:**
-
-- Uses a `for...in` loop and direct property assignments for optimal performance.
 
 ## License
 
