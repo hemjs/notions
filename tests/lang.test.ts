@@ -56,6 +56,11 @@ describe('isEmpty', () => {
     expect(isEmpty(0.0)).toBe(true);
   });
 
+  it('should return true for NaN and bigint zero', () => {
+    expect(isEmpty(NaN)).toBe(true);
+    expect(isEmpty(BigInt(0))).toBe(true);
+  });
+
   it('should return true boolean value false', () => {
     expect(isEmpty(false)).toBe(true);
   });
@@ -88,6 +93,14 @@ describe('isEmpty', () => {
     expect(isEmpty({ a: {}, b: [], c: NaN })).toBe(false);
   });
 
+  it('should return false for non-empty primitive values', () => {
+    expect(isEmpty(true)).toBe(false);
+    expect(isEmpty(1)).toBe(false);
+    expect(isEmpty(BigInt(1))).toBe(false);
+    expect(isEmpty(Symbol('x'))).toBe(false);
+    expect(isEmpty(() => null)).toBe(false);
+  });
+
   it('should distinguish between empty strings and "null" and "undefined" strings', () => {
     expect(isEmpty('null')).toBe(false);
     expect(isEmpty('undefined')).toBe(false);
@@ -96,10 +109,26 @@ describe('isEmpty', () => {
   it('should correctly handle nested arrays and objects', () => {
     expect(isEmpty([])).toBe(true);
     expect(isEmpty([[], {}])).toBe(true);
+    expect(isEmpty([{}])).toBe(true);
+    expect(isEmpty([{ a: null }])).toBe(true);
+    expect(isEmpty([{ a: undefined, b: '' }])).toBe(true);
     expect(isEmpty({})).toBe(true);
     expect(isEmpty({ a: [], b: {} })).toBe(false);
     expect(isEmpty([{ a: 1 }, 'hello'])).toBe(false);
     expect(isEmpty({ a: 1, b: 'hello' })).toBe(false);
+  });
+
+  it('should not mutate objects passed in', () => {
+    const value = { a: null, b: 1 };
+
+    expect(isEmpty(value)).toBe(false);
+    expect(value).toEqual({ a: null, b: 1 });
+  });
+
+  it('should return false for non-plain objects', () => {
+    expect(isEmpty(new Set([1]))).toBe(false);
+    expect(isEmpty(new Map([[1, 2]]))).toBe(false);
+    expect(isEmpty(new Date())).toBe(false);
   });
 });
 

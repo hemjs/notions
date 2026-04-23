@@ -1,18 +1,15 @@
 /** Creates a new object by picking only the specified properties from the given object. */
-export function pick<T extends Record<string, any>, K extends keyof T>(
+export function pick<T extends Record<string, unknown>, K extends keyof T>(
   obj: T,
-  inclusions: K[],
+  inclusions: readonly K[],
 ): Pick<T, K> {
-  const result: Record<string, any> = {};
+  const result = {} as Pick<T, K>;
 
-  for (const key in obj) {
-    if (
-      inclusions.indexOf(key as any) !== -1 &&
-      Object.prototype.hasOwnProperty.call(obj, key)
-    ) {
+  for (const key of inclusions) {
+    if (Object.prototype.hasOwnProperty.call(obj, key)) {
       result[key] = obj[key];
     }
   }
 
-  return result as Pick<T, K>;
+  return result;
 }

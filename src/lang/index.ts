@@ -11,10 +11,16 @@ export type EmptyObject = Record<Key, null | undefined | ''>;
 export type EmptyLike = Falsy | Array<Falsy> | EmptyObject;
 
 /** Represents an instantiable class `T` with constructor parameters. */
-export type Class<T, Args extends unknown[] = any[]> = {
+export type Class<T, Args extends unknown[] = unknown[]> = {
   prototype: Pick<T, keyof T>;
   new (...args: Args): T;
 };
+
+const EMPTY_BIGINT = BigInt(0);
+
+function isEmptyObjectValue(entry: unknown): boolean {
+  return isNil(entry) || entry === '';
+}
 
 /** Returns `true` if `value` is a boolean, else `false`. */
 export function isBoolean(value?: unknown): value is boolean {
@@ -37,35 +43,47 @@ export function isClass<T = unknown>(value: unknown): value is Class<T> {
  * - **boolean:** `false`.
  * - **integer:** `0`.
  * - **float:** `0.0`.
+ * - **nan:** `NaN`.
+ * - **bigint:** `0n`.
+ *
+ * Non-plain objects (e.g. `Set`, `Map`, `Date`) are never treated as empty.
  */
 export function isEmpty(value?: unknown): value is EmptyLike {
-  if (value instanceof Array) {
-    value = value.filter((val) => !isEmpty(val));
-    return (value as Array<any>).length === 0;
-  } else if (value && typeof value === 'object') {
-    for (const key in value) {
-      if (
-        (value as any)[key] === null ||
-        (value as any)[key] === undefined ||
-        (value as any)[key] === ''
-      ) {
-        delete (value as any)[key];
-      }
-    }
-    return Object.keys(value).length === 0;
-  } else if (typeof value === 'string') {
-    return value.trim().length === 0;
-  } else {
-    return (
-      !value ||
-      ((value as string) + '').toLocaleLowerCase() === 'null' ||
-      ((value as string) + '').toLocaleLowerCase() === 'undefined'
-    );
+  if (isNil(value)) {
+    return true;
   }
+
+  if (isString(value)) {
+    return value.trim().length === 0;
+  }
+
+  if (isBoolean(value)) {
+    return value === false;
+  }
+
+  if (isNumber(value)) {
+    return Number.isNaN(value) || value === 0;
+  }
+
+  if (typeof value === 'bigint') {
+    return value === EMPTY_BIGINT;
+  }
+
+  if (Array.isArray(value)) {
+    return value.every((entry) => isEmpty(entry));
+  }
+
+  if (isPlainObject(value)) {
+    return Object.values(value).every((entry) => isEmptyObjectValue(entry));
+  }
+
+  return false;
 }
 
 /** Returns `true` if `value` is a function, else `false`. */
-export function isFunction(value?: unknown): value is (...args: any[]) => any {
+export function isFunction(
+  value?: unknown,
+): value is (...args: unknown[]) => unknown {
   return typeof value === 'function';
 }
 

@@ -1,15 +1,12 @@
 /** Creates a new object by omitting the specified properties from the given object. */
-export function omit<T extends Record<string, any>, K extends keyof T>(
+export function omit<T extends Record<string, unknown>, K extends keyof T>(
   obj: T,
-  exclusions: K[],
+  exclusions: readonly K[],
 ): Omit<T, K> {
-  const result: Record<string, any> = {};
+  const result: Partial<T> = {};
 
-  for (const key in obj) {
-    if (
-      exclusions.indexOf(key as any) === -1 &&
-      Object.prototype.hasOwnProperty.call(obj, key)
-    ) {
+  for (const key of Object.keys(obj) as Array<keyof T>) {
+    if (!exclusions.includes(key as K)) {
       result[key] = obj[key];
     }
   }
