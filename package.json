@@ -1,6 +1,6 @@
 {
   "name": "@hemjs/notions",
-  "version": "1.2.7",
+  "version": "2.0.0",
   "description": "Utilities for arrays, objects, strings, and more",
   "author": "Augustus Kamau",
   "license": "MIT",
