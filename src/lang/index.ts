@@ -18,10 +18,6 @@ export type Class<T, Args extends unknown[] = unknown[]> = {
 
 const EMPTY_BIGINT = BigInt(0);
 
-function isEmptyObjectValue(entry: unknown): boolean {
-  return isNil(entry) || entry === '';
-}
-
 /** Returns `true` if `value` is a boolean, else `false`. */
 export function isBoolean(value?: unknown): value is boolean {
   return typeof value === 'boolean';
@@ -74,7 +70,7 @@ export function isEmpty(value?: unknown): value is EmptyLike {
   }
 
   if (isPlainObject(value)) {
-    return Object.values(value).every((entry) => isEmptyObjectValue(entry));
+    return Object.values(value).every((entry) => isNil(entry) || entry === '');
   }
 
   return false;
