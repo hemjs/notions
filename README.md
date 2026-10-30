@@ -10,7 +10,10 @@
   - [isBoolean](#isboolean)
   - [isClass](#isclass)
   - [isDate](#isdate)
+  - [isDefined](#isdefined)
   - [isEmpty](#isempty)
+  - [isError](#iserror)
+  - [isFiniteNumber](#isfinitenumber)
   - [isFunction](#isfunction)
   - [isMap](#ismap)
   - [isNil](#isnil)
@@ -18,6 +21,8 @@
   - [isNumber](#isnumber)
   - [isObject](#isobject)
   - [isPlainObject](#isplainobject)
+  - [isPrimitive](#isprimitive)
+  - [isPromise](#ispromise)
   - [isSet](#isset)
   - [isString](#isstring)
   - [isSymbol](#issymbol)
@@ -165,6 +170,37 @@ isDate(Date.now());
 
 `true` if `value` is a `Date`, otherwise `false`.
 
+### `isDefined`
+
+Determines whether a given value is neither `null` nor `undefined`.
+
+**Type:**
+
+```ts
+function isDefined<T>(value: T): value is NonNullable<T>;
+```
+
+**Example:**
+
+```ts
+import { isDefined } from '@hemjs/notions';
+
+isDefined(0);
+// => true
+isDefined(null);
+// => false
+['a', null].filter(isDefined);
+// => ['a']
+```
+
+**Parameters:**
+
+- `value`: The value to be checked. Can be any data type.
+
+**Returns:**
+
+`true` if `value` is neither `null` nor `undefined`, otherwise `false`.
+
 ### `isEmpty`
 
 Determines whether a given value is considered empty.
@@ -257,6 +293,66 @@ isEmpty(0, { zeroIsEmpty: true });
 **Returns:**
 
 `true` if `value` is empty, otherwise `false`.
+
+### `isError`
+
+Determines whether a given value is an `Error`, including one from another realm.
+
+**Type:**
+
+```ts
+function isError(value: unknown): value is Error;
+```
+
+**Example:**
+
+```ts
+import { isError } from '@hemjs/notions';
+
+isError(new TypeError('x'));
+// => true
+isError({ message: 'x' });
+// => false
+```
+
+**Parameters:**
+
+- `value`: The value to be checked. Can be any data type.
+
+**Returns:**
+
+`true` if `value` is an `Error`, otherwise `false`.
+
+### `isFiniteNumber`
+
+Determines whether a given value is a finite number, which excludes `NaN` and `Infinity`.
+
+**Type:**
+
+```ts
+function isFiniteNumber(value: unknown): value is number;
+```
+
+**Example:**
+
+```ts
+import { isFiniteNumber } from '@hemjs/notions';
+
+isFiniteNumber(1);
+// => true
+isFiniteNumber(NaN);
+// => false
+isFiniteNumber(Infinity);
+// => false
+```
+
+**Parameters:**
+
+- `value`: The value to be checked. Can be any data type.
+
+**Returns:**
+
+`true` if `value` is a finite number, otherwise `false`.
 
 ### `isFunction`
 
@@ -472,6 +568,68 @@ isPlainObject(Object.create(null));
 **Returns:**
 
 `true` if `value` is a plain object, otherwise `false`.
+
+### `isPrimitive`
+
+Determines whether a given value is a primitive, meaning neither an object nor a function.
+
+**Type:**
+
+```ts
+function isPrimitive(value: unknown): value is Primitive;
+```
+
+**Example:**
+
+```ts
+import { isPrimitive } from '@hemjs/notions';
+
+isPrimitive('a');
+// => true
+isPrimitive(null);
+// => true
+isPrimitive({});
+// => false
+```
+
+**Parameters:**
+
+- `value`: The value to be checked. Can be any data type.
+
+**Returns:**
+
+`true` if `value` is a primitive, otherwise `false`.
+
+### `isPromise`
+
+Determines whether a given value is a thenable, which is what `await` treats as a promise.
+
+**Type:**
+
+```ts
+function isPromise<T = unknown>(value: unknown): value is PromiseLike<T>;
+```
+
+**Example:**
+
+```ts
+import { isPromise } from '@hemjs/notions';
+
+isPromise(Promise.resolve());
+// => true
+isPromise({ then() {} });
+// => true
+isPromise({});
+// => false
+```
+
+**Parameters:**
+
+- `value`: The value to be checked. Can be any data type.
+
+**Returns:**
+
+`true` if `value` is a thenable, otherwise `false`.
 
 ### `isSet`
 

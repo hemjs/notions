@@ -7,6 +7,10 @@ export type Class<T, Args extends unknown[] = unknown[]> = {
   new (...args: Args): T;
 };
 
+/** Represents a value that is neither an object nor a function. */
+export type Primitive =
+  bigint | boolean | null | number | string | symbol | undefined;
+
 /** Options to tune what `isEmpty` considers "empty". */
 export interface IsEmptyOptions {
   /** Treat whitespace-only strings as empty. Defaults to `true`. */
@@ -76,6 +80,11 @@ export function isDate(value: unknown): value is Date {
   );
 }
 
+/** Returns `true` if `value` is neither `null` nor `undefined`, else `false`. */
+export function isDefined<T>(value: T): value is NonNullable<T> {
+  return !isNil(value);
+}
+
 /**
  * Returns `true` if `value` is empty, else `false`:
  *
@@ -139,6 +148,23 @@ export function isEmpty(value: unknown, options: IsEmptyOptions = {}): boolean {
 }
 
 /**
+ * Returns `true` if `value` is an `Error`, else `false`. Works across realms,
+ * unlike `instanceof`, and rejects a spoofed `Symbol.toStringTag`.
+ */
+export function isError(value: unknown): value is Error {
+  return (
+    isObject(value) &&
+    !(Symbol.toStringTag in value) &&
+    Object.prototype.toString.call(value) === '[object Error]'
+  );
+}
+
+/** Returns `true` if `value` is a finite number, else `false`. */
+export function isFiniteNumber(value: unknown): value is number {
+  return Number.isFinite(value);
+}
+
+/**
  * Returns `true` if `value` is a function, else `false`. This includes classes,
  * which throw when called without `new`.
  */
@@ -189,6 +215,29 @@ export function isPlainObject(value: unknown): value is Record<Key, unknown> {
   const proto = Object.getPrototypeOf(value);
 
   return proto === null || Object.getPrototypeOf(proto) === null;
+}
+
+/** Returns `true` if `value` is a primitive, else `false`. */
+export function isPrimitive(value: unknown): value is Primitive {
+  return !isObject(value) && !isFunction(value);
+}
+
+/**
+ * Returns `true` if `value` is a thenable, which is what `await` treats as a
+ * promise, else `false`.
+ */
+export function isPromise<T = unknown>(
+  value: unknown,
+): value is PromiseLike<T> {
+  if (isPrimitive(value)) {
+    return false;
+  }
+
+  try {
+    return isFunction((value as { then?: unknown }).then);
+  } catch {
+    return false;
+  }
 }
 
 /** Returns `true` if `value` is a `Set`, else `false`. */

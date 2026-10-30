@@ -4,7 +4,10 @@ import {
   isBoolean,
   isClass,
   isDate,
+  isDefined,
   isEmpty,
+  isError,
+  isFiniteNumber,
   isFunction,
   isMap,
   isNil,
@@ -12,6 +15,8 @@ import {
   isNumber,
   isObject,
   isPlainObject,
+  isPrimitive,
+  isPromise,
   isSet,
   isString,
   isSymbol,
@@ -107,6 +112,25 @@ describe('isDate', () => {
     expect(isDate(Date.now())).toBe(false);
     expect(isDate({ [Symbol.toStringTag]: 'Date' })).toBe(false);
     expect(isDate(Object.create(Date.prototype))).toBe(false);
+  });
+});
+
+describe('isDefined', () => {
+  it('should return true when value is not nullish', () => {
+    expect(isDefined(0)).toBe(true);
+    expect(isDefined('')).toBe(true);
+    expect(isDefined(false)).toBe(true);
+  });
+
+  it('should return false when value is nullish', () => {
+    expect(isDefined(null)).toBe(false);
+    expect(isDefined(undefined)).toBe(false);
+  });
+
+  it('should narrow when used as a filter', () => {
+    const values: string[] = ['a', null, undefined].filter(isDefined);
+
+    expect(values).toEqual(['a']);
   });
 });
 
@@ -248,6 +272,36 @@ describe('isEmpty', () => {
   });
 });
 
+describe('isError', () => {
+  it('should return true when value is an error', () => {
+    expect(isError(new Error('x'))).toBe(true);
+    expect(isError(new TypeError('x'))).toBe(true);
+    expect(isError(new (class extends Error {})())).toBe(true);
+    expect(isError(runInNewContext('new Error("x")'))).toBe(true);
+  });
+
+  it('should return false when value is not an error', () => {
+    expect(isError('x')).toBe(false);
+    expect(isError({ message: 'x', name: 'Error' })).toBe(false);
+    expect(isError({ [Symbol.toStringTag]: 'Error' })).toBe(false);
+    expect(isError(Object.create(Error.prototype))).toBe(false);
+  });
+});
+
+describe('isFiniteNumber', () => {
+  it('should return true when value is a finite number', () => {
+    expect(isFiniteNumber(0)).toBe(true);
+    expect(isFiniteNumber(-1.5)).toBe(true);
+  });
+
+  it('should return false when value is not a finite number', () => {
+    expect(isFiniteNumber(NaN)).toBe(false);
+    expect(isFiniteNumber(Infinity)).toBe(false);
+    expect(isFiniteNumber(-Infinity)).toBe(false);
+    expect(isFiniteNumber('1')).toBe(false);
+  });
+});
+
 describe('isFunction', () => {
   it('should return true when value is a function', () => {
     expect(isFunction(() => {})).toBe(true);
@@ -378,6 +432,52 @@ describe('isPlainObject', () => {
       // Only compiles if `Date` survives narrowing.
       expect(typeof value === 'string' ? value : value.getTime()).toBeDefined();
     }
+  });
+});
+
+describe('isPrimitive', () => {
+  it('should return true when value is a primitive', () => {
+    expect(isPrimitive(null)).toBe(true);
+    expect(isPrimitive(undefined)).toBe(true);
+    expect(isPrimitive(true)).toBe(true);
+    expect(isPrimitive(1)).toBe(true);
+    expect(isPrimitive(BigInt(1))).toBe(true);
+    expect(isPrimitive('a')).toBe(true);
+    expect(isPrimitive(Symbol())).toBe(true);
+  });
+
+  it('should return false when value is not a primitive', () => {
+    expect(isPrimitive({})).toBe(false);
+    expect(isPrimitive([])).toBe(false);
+    expect(isPrimitive(() => {})).toBe(false);
+    expect(isPrimitive(new Number(1))).toBe(false);
+  });
+});
+
+describe('isPromise', () => {
+  it('should return true when value is a thenable', () => {
+    const callable = Object.assign(() => {}, { then() {} });
+
+    expect(isPromise(Promise.resolve())).toBe(true);
+    expect(isPromise({ then() {} })).toBe(true);
+    expect(isPromise(callable)).toBe(true);
+  });
+
+  it('should return false when value is not a thenable', () => {
+    expect(isPromise(null)).toBe(false);
+    expect(isPromise('then')).toBe(false);
+    expect(isPromise({})).toBe(false);
+    expect(isPromise({ then: true })).toBe(false);
+  });
+
+  it('should return false when reading then throws', () => {
+    const value = {
+      get then() {
+        throw new Error('x');
+      },
+    };
+
+    expect(isPromise(value)).toBe(false);
   });
 });
 
