@@ -599,15 +599,15 @@ isUndefined(0);
 
 ### `omit`
 
-Creates a new object with specific properties omitted from a source object.
+Creates a new object with specific properties omitted from a source object. Only own enumerable properties are copied, including symbols. Inherited members such as class methods and non-enumerable properties such as `Error.message` are left out, so every property of the result is optional. Getters are read and their values copied, and `__proto__` keys are dropped.
 
 **Type:**
 
 ```ts
-function omit<T extends Record<string, unknown>, K extends keyof T>(
+function omit<T extends object, K extends keyof T>(
   obj: T,
   exclusions: readonly K[],
-): Omit<T, K>;
+): Partial<Omit<T, K>>;
 ```
 
 **Example:**
@@ -627,19 +627,19 @@ console.log(publicInfo); // Output: { name: 'Alice', city: 'Nairobi' }
 
 **Returns:**
 
-A new object containing all properties from `obj` except those listed in `exclusions`.
+A new object containing the own enumerable properties of `obj`, except those listed in `exclusions` and `__proto__`.
 
 ### `pick`
 
-Creates a new object containing only the specified properties from a source object.
+Creates a new object containing only the specified properties from a source object. Keys that are not own enumerable properties of the source, such as `Error.message`, are skipped, so every property of the result is optional. Getters are read and their values copied, and `__proto__` keys are dropped.
 
 **Type:**
 
 ```ts
-function pick<T extends Record<string, unknown>, K extends keyof T>(
+function pick<T extends object, K extends keyof T>(
   obj: T,
   inclusions: readonly K[],
-): Pick<T, K>;
+): Partial<Pick<T, K>>;
 ```
 
 **Example:**
@@ -659,7 +659,7 @@ console.log(nameAndAge); // Output: { name: 'Alice', age: 30 }
 
 **Returns:**
 
-A new object containing only the properties listed in `inclusions` from `obj`.
+A new object containing the properties listed in `inclusions` that are own enumerable properties of `obj`, except `__proto__`.
 
 ## License
 
