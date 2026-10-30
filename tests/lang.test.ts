@@ -34,9 +34,49 @@ describe('isClass', () => {
     expect(isClass(Bar)).toBe(true);
   });
 
+  it('should recognise classes regardless of source formatting', () => {
+    // prettier-ignore
+    expect(isClass(class{})).toBe(true);
+    // prettier-ignore
+    expect(isClass(class/*c*/A{})).toBe(true);
+    // prettier-ignore
+    expect(isClass(class
+      A {})).toBe(true);
+    expect(isClass(class extends Bar {})).toBe(true);
+  });
+
+  it('should ignore an overridden toString', () => {
+    expect(
+      isClass(
+        class A {
+          static toString() {
+            return 'A';
+          }
+        },
+      ),
+    ).toBe(true);
+    expect(
+      isClass(
+        class A {
+          static toString() {}
+        },
+      ),
+    ).toBe(true);
+
+    const fn = () => {};
+    fn.toString = null as never;
+    expect(isClass(fn)).toBe(false);
+  });
+
   it('should return false when value is not a class', () => {
     expect(isClass(Foo)).toBe(false);
     expect(isClass(new Bar())).toBe(false);
+    /* eslint-disable @typescript-eslint/unbound-method */
+    expect(isClass({ class() {} }.class)).toBe(false);
+    // prettier-ignore
+    expect(isClass({ class () {} }.class)).toBe(false);
+    expect(isClass({ classy() {} }.classy)).toBe(false);
+    /* eslint-enable @typescript-eslint/unbound-method */
   });
 });
 

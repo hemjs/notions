@@ -23,9 +23,15 @@ export function isBoolean(value?: unknown): value is boolean {
   return typeof value === 'boolean';
 }
 
-/** Returns `true` if `value` is a class, else `false`. */
+/**
+ * Returns `true` if `value` is a class, else `false`. Native classes such as
+ * `Map` are indistinguishable from functions and return `false`.
+ */
 export function isClass<T = unknown>(value: unknown): value is Class<T> {
-  return typeof value === 'function' && value.toString().startsWith('class ');
+  return (
+    typeof value === 'function' &&
+    /^class(?=[\s{/])(?!\s*\()/.test(Function.prototype.toString.call(value))
+  );
 }
 
 /**

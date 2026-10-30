@@ -72,7 +72,7 @@ isBoolean(null);
 
 ### `isClass`
 
-Determines whether a given value is a class.
+Determines whether a given value is a class. Native classes such as `Map` are indistinguishable from functions and return `false`.
 
 **Type:**
 
