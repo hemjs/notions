@@ -1,13 +1,18 @@
+import { runInNewContext } from 'node:vm';
 import {
+  isBigInt,
   isBoolean,
   isClass,
+  isDate,
   isEmpty,
   isFunction,
+  isMap,
   isNil,
   isNull,
   isNumber,
   isObject,
   isPlainObject,
+  isSet,
   isString,
   isSymbol,
   isUndefined,
@@ -17,6 +22,17 @@ function Foo() {}
 
 class Bar {}
 
+describe('isBigInt', () => {
+  it('should return true when value is a bigint', () => {
+    expect(isBigInt(BigInt(1))).toBe(true);
+  });
+
+  it('should return false when value is not a bigint', () => {
+    expect(isBigInt(1)).toBe(false);
+    expect(isBigInt('1')).toBe(false);
+  });
+});
+
 describe('isBoolean', () => {
   it('should return true when value is a boolean', () => {
     expect(isBoolean(true)).toBe(true);
@@ -24,7 +40,7 @@ describe('isBoolean', () => {
   });
 
   it('should return false when value is not a boolean', () => {
-    expect(isBoolean()).toBe(false);
+    expect(isBoolean(undefined)).toBe(false);
     expect(isBoolean('abc')).toBe(false);
   });
 });
@@ -80,10 +96,24 @@ describe('isClass', () => {
   });
 });
 
+describe('isDate', () => {
+  it('should return true when value is a date', () => {
+    expect(isDate(new Date())).toBe(true);
+    expect(isDate(new Date('x'))).toBe(true);
+    expect(isDate(runInNewContext('new Date()'))).toBe(true);
+  });
+
+  it('should return false when value is not a date', () => {
+    expect(isDate(Date.now())).toBe(false);
+    expect(isDate({ [Symbol.toStringTag]: 'Date' })).toBe(false);
+    expect(isDate(Object.create(Date.prototype))).toBe(false);
+  });
+});
+
 describe('isEmpty', () => {
   it('should return true for null and undefined values', () => {
-    expect(isEmpty(null)).toBe(true);
     expect(isEmpty(undefined)).toBe(true);
+    expect(isEmpty(null)).toBe(true);
   });
 
   it('should return true for empty strings', () => {
@@ -91,71 +121,66 @@ describe('isEmpty', () => {
     expect(isEmpty('    ')).toBe(true);
   });
 
-  it('should return true for integer 0 and float 0.0', () => {
-    expect(isEmpty(0)).toBe(true);
-    expect(isEmpty(0.0)).toBe(true);
-  });
-
-  it('should return true for NaN and bigint zero', () => {
-    expect(isEmpty(NaN)).toBe(true);
-    expect(isEmpty(BigInt(0))).toBe(true);
-  });
-
-  it('should return true boolean value false', () => {
-    expect(isEmpty(false)).toBe(true);
-  });
-
-  it('should return true for empty arrays', () => {
-    expect(isEmpty([])).toBe(true);
-    expect(isEmpty([undefined, null, ''])).toBe(true);
-    expect(isEmpty([false])).toBe(true);
-    expect(isEmpty([{}, NaN, 0, 0.0])).toBe(true);
-    expect(isEmpty([{ a: null, b: undefined, c: '' }])).toBe(true);
-  });
-
-  it('should return true for empty objects', () => {
-    expect(isEmpty({})).toBe(true);
-    expect(isEmpty({ a: null, b: undefined, c: '' })).toBe(true);
-  });
-
   it('should return false for non-empty strings', () => {
     expect(isEmpty('hello')).toBe(false);
-    expect(isEmpty('123')).toBe(false);
-  });
-
-  it('should return false for arrays with non-empty elements', () => {
-    expect(isEmpty([1, 'hello'])).toBe(false);
-    expect(isEmpty([{ a: 1 }])).toBe(false);
-  });
-
-  it('should return false for objects with non-empty properties', () => {
-    expect(isEmpty({ a: 1, b: 'hello', c: true })).toBe(false);
-    expect(isEmpty({ a: {}, b: [], c: NaN })).toBe(false);
-  });
-
-  it('should return false for non-empty primitive values', () => {
-    expect(isEmpty(true)).toBe(false);
-    expect(isEmpty(1)).toBe(false);
-    expect(isEmpty(BigInt(1))).toBe(false);
-    expect(isEmpty(Symbol('x'))).toBe(false);
-    expect(isEmpty(() => null)).toBe(false);
-  });
-
-  it('should distinguish between empty strings and "null" and "undefined" strings', () => {
     expect(isEmpty('null')).toBe(false);
     expect(isEmpty('undefined')).toBe(false);
   });
 
-  it('should correctly handle nested arrays and objects', () => {
+  it('should respect trimStrings', () => {
+    expect(isEmpty('    ', { trimStrings: false })).toBe(false);
+    expect(isEmpty('', { trimStrings: false })).toBe(true);
+  });
+
+  it('should treat NaN as empty', () => {
+    expect(isEmpty(NaN)).toBe(true);
+  });
+
+  it('should treat zero as empty only with zeroIsEmpty', () => {
+    expect(isEmpty(0)).toBe(false);
+    expect(isEmpty(BigInt(0))).toBe(false);
+    expect(isEmpty(0, { zeroIsEmpty: true })).toBe(true);
+    expect(isEmpty(-0, { zeroIsEmpty: true })).toBe(true);
+    expect(isEmpty(BigInt(0), { zeroIsEmpty: true })).toBe(true);
+    expect(isEmpty(1, { zeroIsEmpty: true })).toBe(false);
+    expect(isEmpty(BigInt(1), { zeroIsEmpty: true })).toBe(false);
+  });
+
+  it('should treat false as empty only with falseIsEmpty', () => {
+    expect(isEmpty(false)).toBe(false);
+    expect(isEmpty(false, { falseIsEmpty: true })).toBe(true);
+    expect(isEmpty(true, { falseIsEmpty: true })).toBe(false);
+  });
+
+  it('should fall back to the default for undefined options', () => {
+    expect(isEmpty('    ', { trimStrings: undefined })).toBe(true);
+  });
+
+  it('should only consider the length of arrays', () => {
     expect(isEmpty([])).toBe(true);
-    expect(isEmpty([[], {}])).toBe(true);
-    expect(isEmpty([{}])).toBe(true);
-    expect(isEmpty([{ a: null }])).toBe(true);
-    expect(isEmpty([{ a: undefined, b: '' }])).toBe(true);
+    expect(isEmpty([null])).toBe(false);
+    expect(isEmpty([[]])).toBe(false);
+    expect(isEmpty([1, 'hello'])).toBe(false);
+  });
+
+  it('should not recurse into self-referencing arrays', () => {
+    const value: unknown[] = [];
+    value.push(value);
+
+    expect(isEmpty(value)).toBe(false);
+  });
+
+  it('should only consider the keys of plain objects', () => {
     expect(isEmpty({})).toBe(true);
-    expect(isEmpty({ a: [], b: {} })).toBe(false);
-    expect(isEmpty([{ a: 1 }, 'hello'])).toBe(false);
+    expect(isEmpty(Object.create(null))).toBe(true);
+    expect(isEmpty({ a: null })).toBe(false);
+    expect(isEmpty({ a: '' })).toBe(false);
     expect(isEmpty({ a: 1, b: 'hello' })).toBe(false);
+  });
+
+  it('should count symbol and non-enumerable keys', () => {
+    expect(isEmpty({ [Symbol('a')]: 1 })).toBe(false);
+    expect(isEmpty(Object.defineProperty({}, 'a', { value: 1 }))).toBe(false);
   });
 
   it('should not mutate objects passed in', () => {
@@ -165,10 +190,61 @@ describe('isEmpty', () => {
     expect(value).toEqual({ a: null, b: 1 });
   });
 
-  it('should return false for non-plain objects', () => {
-    expect(isEmpty(new Set([1]))).toBe(false);
+  it('should check the size of maps and sets', () => {
+    expect(isEmpty(new Map())).toBe(true);
+    expect(isEmpty(new Set())).toBe(true);
     expect(isEmpty(new Map([[1, 2]]))).toBe(false);
+    expect(isEmpty(new Set([1]))).toBe(false);
+  });
+
+  it('should check the byte length of binary data', () => {
+    expect(isEmpty(new ArrayBuffer(0))).toBe(true);
+    expect(isEmpty(new SharedArrayBuffer(0))).toBe(true);
+    expect(isEmpty(new Uint8Array(0))).toBe(true);
+    expect(isEmpty(new DataView(new ArrayBuffer(0)))).toBe(true);
+    expect(isEmpty(new ArrayBuffer(1))).toBe(false);
+    expect(isEmpty(new SharedArrayBuffer(1))).toBe(false);
+    expect(isEmpty(new Uint8Array(1))).toBe(false);
+    expect(isEmpty(new DataView(new ArrayBuffer(1)))).toBe(false);
+  });
+
+  it('should treat only invalid dates as empty', () => {
     expect(isEmpty(new Date())).toBe(false);
+    expect(isEmpty(new Date('x'))).toBe(true);
+  });
+
+  it('should handle values from another realm', () => {
+    expect(isEmpty(runInNewContext('new Map()'))).toBe(true);
+    expect(isEmpty(runInNewContext('new Set([1])'))).toBe(false);
+    expect(isEmpty(runInNewContext('new Date("x")'))).toBe(true);
+    expect(isEmpty(runInNewContext('new ArrayBuffer(0)'))).toBe(true);
+    expect(isEmpty(runInNewContext('({})'))).toBe(true);
+  });
+
+  it('should not throw on lookalike built-ins', () => {
+    expect(isEmpty(Object.create(Map.prototype))).toBe(false);
+    expect(isEmpty(Object.create(Date.prototype))).toBe(false);
+    expect(isEmpty(Object.create(ArrayBuffer.prototype))).toBe(false);
+    expect(isEmpty({ [Symbol.toStringTag]: 'Date' })).toBe(false);
+  });
+
+  it('should return false for everything else', () => {
+    expect(isEmpty(true)).toBe(false);
+    expect(isEmpty(1)).toBe(false);
+    expect(isEmpty(Symbol('x'))).toBe(false);
+    expect(isEmpty(() => null)).toBe(false);
+    expect(isEmpty(new Bar())).toBe(false);
+    expect(isEmpty(new Error('x'))).toBe(false);
+    expect(isEmpty(new WeakMap())).toBe(false);
+    expect(isEmpty(Promise.resolve())).toBe(false);
+    expect(isEmpty(/x/)).toBe(false);
+    expect(isEmpty(Math)).toBe(false);
+    expect(isEmpty(JSON)).toBe(false);
+    expect(isEmpty(Reflect)).toBe(false);
+  });
+
+  it('should not throw on a prototype constructor without a prototype', () => {
+    expect(isEmpty(Object.create({ constructor: () => {} }))).toBe(false);
   });
 });
 
@@ -179,18 +255,31 @@ describe('isFunction', () => {
   });
 
   it('should return false when value is not a function', () => {
-    expect(isFunction()).toBe(false);
-    expect(isFunction(null)).toBe(false);
     expect(isFunction(undefined)).toBe(false);
+    expect(isFunction(null)).toBe(false);
     expect(isFunction('abc')).toBe(false);
+  });
+});
+
+describe('isMap', () => {
+  it('should return true when value is a map', () => {
+    expect(isMap(new Map())).toBe(true);
+    expect(isMap(new (class extends Map {})())).toBe(true);
+    expect(isMap(runInNewContext('new Map()'))).toBe(true);
+  });
+
+  it('should return false when value is not a map', () => {
+    expect(isMap(new Set())).toBe(false);
+    expect(isMap(new WeakMap())).toBe(false);
+    expect(isMap({ [Symbol.toStringTag]: 'Map' })).toBe(false);
+    expect(isMap(Object.create(Map.prototype))).toBe(false);
   });
 });
 
 describe('isNil', () => {
   it('should return true when value is nil', () => {
-    expect(isNil()).toBe(true);
-    expect(isNil(null)).toBe(true);
     expect(isNil(undefined)).toBe(true);
+    expect(isNil(null)).toBe(true);
   });
 
   it('should return false when value is not nil', () => {
@@ -205,7 +294,6 @@ describe('isNull', () => {
   });
 
   it('should return false when value is not null', () => {
-    expect(isNull()).toBe(false);
     expect(isNull(undefined)).toBe(false);
     expect(isNull('abc')).toBe(false);
   });
@@ -223,9 +311,8 @@ describe('isNumber', () => {
   });
 
   it('should return false when value is not a number', () => {
-    expect(isNumber()).toBe(false); // undefined
-    expect(isNumber(null)).toBe(false); // nullish
     expect(isNumber(undefined)).toBe(false); // undefined
+    expect(isNumber(null)).toBe(false); // nullish
     expect(isNumber('123')).toBe(false); // string
   });
 });
@@ -238,9 +325,8 @@ describe('isObject', () => {
   });
 
   it('should return false when value is not an object', () => {
-    expect(isObject()).toBe(false);
-    expect(isObject(null)).toBe(false);
     expect(isObject(undefined)).toBe(false);
+    expect(isObject(null)).toBe(false);
     expect(isObject('abc')).toBe(false);
     expect(isObject(123)).toBe(false);
     expect(isObject(Number(123))).toBe(false);
@@ -260,13 +346,53 @@ describe('isPlainObject', () => {
   });
 
   it('should return false when object is not plain object', () => {
-    expect(isPlainObject()).toBe(false);
-    expect(isPlainObject(null)).toBe(false);
     expect(isPlainObject(undefined)).toBe(false);
+    expect(isPlainObject(null)).toBe(false);
     expect(isPlainObject('abc')).toBe(false);
     expect(isPlainObject(123)).toBe(false);
     expect(isPlainObject([1, 2, 3])).toBe(false);
     expect(isPlainObject(new Date())).toBe(false);
+    expect(isPlainObject(new Bar())).toBe(false);
+  });
+
+  it('should return false for built-in namespaces and arguments', () => {
+    expect(isPlainObject(Math)).toBe(false);
+    expect(isPlainObject(JSON)).toBe(false);
+    expect(
+      (function () {
+        // eslint-disable-next-line prefer-rest-params
+        return isPlainObject(arguments);
+      })(),
+    ).toBe(false);
+  });
+
+  it('should return false when the prototype constructor has no prototype', () => {
+    expect(isPlainObject(Object.create({ constructor() {} }))).toBe(false);
+    expect(isPlainObject(Object.create({ constructor: () => {} }))).toBe(false);
+  });
+
+  it('should keep class instances in the false branch when narrowing', () => {
+    const value = new Date() as Date | string;
+
+    if (!isPlainObject(value)) {
+      // Only compiles if `Date` survives narrowing.
+      expect(typeof value === 'string' ? value : value.getTime()).toBeDefined();
+    }
+  });
+});
+
+describe('isSet', () => {
+  it('should return true when value is a set', () => {
+    expect(isSet(new Set())).toBe(true);
+    expect(isSet(new (class extends Set {})())).toBe(true);
+    expect(isSet(runInNewContext('new Set()'))).toBe(true);
+  });
+
+  it('should return false when value is not a set', () => {
+    expect(isSet(new Map())).toBe(false);
+    expect(isSet(new WeakSet())).toBe(false);
+    expect(isSet({ [Symbol.toStringTag]: 'Set' })).toBe(false);
+    expect(isSet(Object.create(Set.prototype))).toBe(false);
   });
 });
 
@@ -276,9 +402,8 @@ describe('isString', () => {
   });
 
   it('should return false when value is not a string', () => {
-    expect(isString()).toBe(false);
-    expect(isString(null)).toBe(false);
     expect(isString(undefined)).toBe(false);
+    expect(isString(null)).toBe(false);
     expect(isString(false)).toBe(false);
     expect(isString(123)).toBe(false);
     expect(isString(new String('fine'))).toBe(false); // object
@@ -301,7 +426,6 @@ describe('isSymbol', () => {
 
 describe('isUndefined', () => {
   it('should return true when value is undefined', () => {
-    expect(isUndefined()).toBe(true);
     expect(isUndefined(undefined)).toBe(true);
   });
 
