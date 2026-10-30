@@ -194,7 +194,8 @@ describe('isNil', () => {
   });
 
   it('should return false when value is not nil', () => {
-    expect(isNull('abc')).toBe(false);
+    expect(isNil('abc')).toBe(false);
+    expect(isNil(0)).toBe(false);
   });
 });
 
