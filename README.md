@@ -24,6 +24,8 @@ Includes runtime checks that narrow `unknown` values, plus `omit` and `pick` for
 
 ## Installation
 
+Notions is published as an ES module and requires Node.js 22.12 or later.
+
 ```sh
 npm install @hemjs/notions
 ```
@@ -31,6 +33,12 @@ npm install @hemjs/notions
 ```sh
 yarn add @hemjs/notions
 ```
+
+```sh
+pnpm add @hemjs/notions
+```
+
+CommonJS code can still load it with `require()`, which Node.js 22.12 and later support for ES modules.
 
 ## Quick start
 
