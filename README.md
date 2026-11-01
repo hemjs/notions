@@ -4,7 +4,7 @@
 
 Includes runtime checks that narrow `unknown` values, plus `omit` and `pick` for safely copying objects.
 
-## Contents
+## Table of contents
 
 - [Installation](#installation)
 - [Quick start](#quick-start)
@@ -295,4 +295,6 @@ type Primitive = bigint | boolean | null | number | string | symbol | undefined;
 
 ## License
 
-[MIT](LICENSE)
+This project is licensed under the **MIT license**.
+
+See [LICENSE](LICENSE) for more information.
