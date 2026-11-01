@@ -1,4 +1,6 @@
-import { omit, pick } from '../src';
+import { describe, expect, it } from 'vitest';
+
+import { omit, pick } from '../src/index.js';
 
 interface User {
   name: string;

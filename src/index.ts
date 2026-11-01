@@ -1,2 +1,2 @@
-export * from './lang';
-export * from './object';
+export * from './lang/index.js';
+export * from './object/index.js';

@@ -1,4 +1,13 @@
 import { runInNewContext } from 'node:vm';
+
+import {
+  afterAll,
+  beforeAll,
+  describe,
+  expect,
+  expectTypeOf,
+  it,
+} from 'vitest';
 import {
   isBigInt,
   isBoolean,
@@ -21,7 +30,7 @@ import {
   isString,
   isSymbol,
   isUndefined,
-} from '../src';
+} from '../src/index.js';
 
 function Foo() {}
 
@@ -55,14 +64,11 @@ describe('isClass', () => {
     expect(isClass(Bar)).toBe(true);
   });
 
+  // Evaluated from strings, since the test transform rewrites source text.
   it('should recognise classes regardless of source formatting', () => {
-    // prettier-ignore
-    expect(isClass(class{})).toBe(true);
-    // prettier-ignore
-    expect(isClass(class/*c*/A{})).toBe(true);
-    // prettier-ignore
-    expect(isClass(class
-      A {})).toBe(true);
+    expect(isClass(runInNewContext('(class{})'))).toBe(true);
+    expect(isClass(runInNewContext('(class/*c*/A{})'))).toBe(true);
+    expect(isClass(runInNewContext('(class\nA {})'))).toBe(true);
     expect(isClass(class extends Bar {})).toBe(true);
   });
 
@@ -92,12 +98,9 @@ describe('isClass', () => {
   it('should return false when value is not a class', () => {
     expect(isClass(Foo)).toBe(false);
     expect(isClass(new Bar())).toBe(false);
-    /* eslint-disable @typescript-eslint/unbound-method */
-    expect(isClass({ class() {} }.class)).toBe(false);
-    // prettier-ignore
-    expect(isClass({ class () {} }.class)).toBe(false);
-    expect(isClass({ classy() {} }.classy)).toBe(false);
-    /* eslint-enable @typescript-eslint/unbound-method */
+    expect(isClass(runInNewContext('({ class() {} }).class'))).toBe(false);
+    expect(isClass(runInNewContext('({ class () {} }).class'))).toBe(false);
+    expect(isClass(runInNewContext('({ classy() {} }).classy'))).toBe(false);
   });
 });
 
@@ -472,8 +475,7 @@ describe('isPlainObject', () => {
     const value = new Date() as Date | string;
 
     if (!isPlainObject(value)) {
-      // Only compiles if `Date` survives narrowing.
-      expect(typeof value === 'string' ? value : value.getTime()).toBeDefined();
+      expectTypeOf(value).toEqualTypeOf<Date | string>();
     }
   });
 });
