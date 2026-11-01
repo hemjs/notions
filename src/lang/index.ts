@@ -147,15 +147,26 @@ export function isEmpty(value: unknown, options: IsEmptyOptions = {}): boolean {
   return isPlainObject(value) && Reflect.ownKeys(value).length === 0;
 }
 
-/**
- * Returns `true` if `value` is an `Error`, else `false`. Works across realms,
- * unlike `instanceof`, and rejects a spoofed `Symbol.toStringTag`.
- */
+/** Returns `true` if `value` is an `Error` or `DOMException`, else `false`. */
 export function isError(value: unknown): value is Error {
+  const { isError: nativeIsError } = Error as ErrorConstructor & {
+    isError?: (value: unknown) => boolean;
+  };
+
+  if (nativeIsError) {
+    return nativeIsError(value);
+  }
+
   return (
-    isObject(value) &&
-    !(Symbol.toStringTag in value) &&
-    Object.prototype.toString.call(value) === '[object Error]'
+    hasBrand(value, 'DOMException', (error: DOMException) =>
+      Object.getOwnPropertyDescriptor(
+        DOMException.prototype,
+        'code',
+      )?.get?.call(error),
+    ) ||
+    (isObject(value) &&
+      !(Symbol.toStringTag in value) &&
+      Object.prototype.toString.call(value) === '[object Error]')
   );
 }
 
