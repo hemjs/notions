@@ -14,11 +14,11 @@ export type Primitive =
 /** Options to tune what `isEmpty` considers "empty". */
 export interface IsEmptyOptions {
   /** Treat whitespace-only strings as empty. Defaults to `true`. */
-  trimStrings?: boolean;
+  trimStrings?: boolean | undefined;
   /** Treat `0`, `-0` and `0n` as empty. Defaults to `false`. */
-  zeroIsEmpty?: boolean;
+  zeroIsEmpty?: boolean | undefined;
   /** Treat `false` as empty. Defaults to `false`. */
-  falseIsEmpty?: boolean;
+  falseIsEmpty?: boolean | undefined;
 }
 
 /** Returns `true` if `value` has the built-in `tag` and passes `check`. */
@@ -152,12 +152,16 @@ export function isError(value: unknown): value is Error {
   }
 
   return (
-    hasBrand(value, 'DOMException', (error: DOMException) =>
+    hasBrand(value, 'DOMException', (error: object) => {
+      const { DOMException } = globalThis as unknown as {
+        DOMException: { prototype: object };
+      };
+
       Object.getOwnPropertyDescriptor(
         DOMException.prototype,
         'code',
-      )?.get?.call(error),
-    ) ||
+      )?.get?.call(error);
+    }) ||
     (isObject(value) &&
       !(Symbol.toStringTag in value) &&
       Object.prototype.toString.call(value) === '[object Error]')
