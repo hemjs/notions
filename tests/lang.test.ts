@@ -286,6 +286,49 @@ describe('isError', () => {
     expect(isError({ [Symbol.toStringTag]: 'Error' })).toBe(false);
     expect(isError(Object.create(Error.prototype))).toBe(false);
   });
+
+  it('should return true for a DOMException', () => {
+    const controller = new AbortController();
+    controller.abort();
+
+    expect(isError(new DOMException('x'))).toBe(true);
+    expect(isError(controller.signal.reason)).toBe(true);
+  });
+
+  describe('without Error.isError', () => {
+    const descriptor = Object.getOwnPropertyDescriptor(Error, 'isError');
+
+    beforeAll(() => {
+      Object.defineProperty(Error, 'isError', {
+        configurable: true,
+        value: undefined,
+      });
+    });
+
+    afterAll(() => {
+      delete (Error as { isError?: unknown }).isError;
+
+      if (descriptor) {
+        Object.defineProperty(Error, 'isError', descriptor);
+      }
+    });
+
+    it('should return true when value is an error', () => {
+      expect(isError(new TypeError('x'))).toBe(true);
+      expect(isError(new (class extends Error {})())).toBe(true);
+      expect(isError(runInNewContext('new Error("x")'))).toBe(true);
+      expect(isError(new DOMException('x'))).toBe(true);
+    });
+
+    it('should return false when value is not an error', () => {
+      expect(isError(null)).toBe(false);
+      expect(isError('x')).toBe(false);
+      expect(isError({ [Symbol.toStringTag]: 'Error' })).toBe(false);
+      expect(isError({ [Symbol.toStringTag]: 'DOMException' })).toBe(false);
+      expect(isError(Object.create(DOMException.prototype))).toBe(false);
+      expect(isError(Object.create(Error.prototype))).toBe(false);
+    });
+  });
 });
 
 describe('isFiniteNumber', () => {
