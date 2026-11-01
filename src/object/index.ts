@@ -12,8 +12,8 @@ function isCopyable(obj: object, key: PropertyKey): boolean {
 /**
  * Creates a new object by omitting the specified properties from the given
  * object. Copies own enumerable properties, including symbols, reading any
- * getters. Every property of the result is optional, since inherited members
- * such as class methods are not copied.
+ * getters. `__proto__` keys are dropped. Every property of the result is
+ * optional, since inherited members such as class methods are not copied.
  */
 export function omit<T extends object, K extends keyof T>(
   obj: T,
@@ -36,8 +36,9 @@ export function omit<T extends object, K extends keyof T>(
 
 /**
  * Creates a new object by picking only the specified properties from the given
- * object, reading any getters. Keys that are not own enumerable properties of
- * `obj` are skipped, so every property of the result is optional.
+ * object, reading any getters. `__proto__` keys and keys that are not own
+ * enumerable properties of `obj` are skipped, so every property of the result
+ * is optional.
  */
 export function pick<T extends object, K extends keyof T>(
   obj: T,

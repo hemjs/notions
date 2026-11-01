@@ -1,620 +1,187 @@
 # @hemjs/notions
 
-> Utilities for arrays, objects, strings, and more.
+> Type-safe utilities for values, objects, and more.
 
-## Table of contents
+Includes runtime checks that narrow `unknown` values, plus `omit` and `pick` for safely copying objects.
+
+## Contents
 
 - [Installation](#installation)
-- [Lang](#lang)
-  - [isBigInt](#isbigint)
-  - [isBoolean](#isboolean)
+- [Quick start](#quick-start)
+- [Type guards](#type-guards)
   - [isClass](#isclass)
-  - [isDate](#isdate)
-  - [isDefined](#isdefined)
+  - [isDate, isMap and isSet](#isdate-ismap-and-isset)
   - [isEmpty](#isempty)
   - [isError](#iserror)
-  - [isFiniteNumber](#isfinitenumber)
-  - [isFunction](#isfunction)
-  - [isMap](#ismap)
-  - [isNil](#isnil)
-  - [isNull](#isnull)
-  - [isNumber](#isnumber)
-  - [isObject](#isobject)
-  - [isPlainObject](#isplainobject)
-  - [isPrimitive](#isprimitive)
+  - [isObject and isPlainObject](#isobject-and-isplainobject)
   - [isPromise](#ispromise)
-  - [isSet](#isset)
-  - [isString](#isstring)
-  - [isSymbol](#issymbol)
-  - [isUndefined](#isundefined)
-- [Object](#object)
+- [Object helpers](#object-helpers)
   - [omit](#omit)
   - [pick](#pick)
+  - [Copying rules](#copying-rules)
+- [Types](#types)
 - [License](#license)
 
 ## Installation
 
-Install with npm:
-
 ```sh
-npm install --save @hemjs/notions
+npm install @hemjs/notions
 ```
-
-Install with yarn:
 
 ```sh
 yarn add @hemjs/notions
 ```
 
-## Lang
-
-### `isBigInt`
-
-Determines whether a given value is of type bigint.
-
-**Type:**
+## Quick start
 
 ```ts
-function isBigInt(value: unknown): value is bigint;
-```
+import { isDefined, isEmpty, isError, omit } from '@hemjs/notions';
 
-**Example:**
+['a', null, undefined].filter(isDefined);
+// => ['a']
 
-```ts
-import { isBigInt } from '@hemjs/notions';
-
-isBigInt(1n);
+isEmpty('   ');
 // => true
-isBigInt(1);
-// => false
+
+try {
+  run();
+} catch (error) {
+  console.error(isError(error) ? error.message : error);
+}
+
+omit({ id: 1, password: 'secret' }, ['password']);
+// => { id: 1 }
 ```
 
-**Parameters:**
+## Type guards
 
-- `value`: The value to be checked. Can be any data type.
+Each guard takes one `value` of any type, returns a boolean and, except for `isEmpty`, narrows the type when `true`.
 
-**Returns:**
+| Guard            | Returns `true` for                         | Narrows to                        |
+| ---------------- | ------------------------------------------ | --------------------------------- |
+| `isBigInt`       | A bigint                                   | `bigint`                          |
+| `isBoolean`      | `true` or `false`                          | `boolean`                         |
+| `isClass`        | A class ([details](#isclass))              | `Class<T>`                        |
+| `isDate`         | A `Date`, valid or not                     | `Date`                            |
+| `isDefined`      | Anything except `null` and `undefined`     | `NonNullable<T>`                  |
+| `isEmpty`        | An empty value ([details](#isempty))       | Does not narrow                   |
+| `isError`        | An `Error` or `DOMException`               | `Error`                           |
+| `isFiniteNumber` | A number, excluding `NaN` and `Infinity`   | `number`                          |
+| `isFunction`     | A function or class                        | `(...args: unknown[]) => unknown` |
+| `isMap`          | A `Map`                                    | `Map<K, V>`                       |
+| `isNil`          | `null` or `undefined`                      | `null \| undefined`               |
+| `isNull`         | `null`                                     | `null`                            |
+| `isNumber`       | A number, including `NaN` and `Infinity`   | `number`                          |
+| `isObject`       | A non-null object, including arrays        | `object`                          |
+| `isPlainObject`  | A plain object                             | `Record<Key, unknown>`            |
+| `isPrimitive`    | Anything except objects and functions      | `Primitive`                       |
+| `isPromise`      | A thenable                                 | `PromiseLike<T>`                  |
+| `isSet`          | A `Set`                                    | `Set<T>`                          |
+| `isString`       | A string, excluding `new String()` objects | `string`                          |
+| `isSymbol`       | A symbol                                   | `symbol`                          |
+| `isUndefined`    | `undefined`                                | `undefined`                       |
 
-`true` if `value` is a bigint, otherwise `false`.
-
-### `isBoolean`
-
-Determines whether a given value is of type boolean.
-
-**Type:**
-
-```ts
-function isBoolean(value: unknown): value is boolean;
-```
-
-**Example:**
-
-```ts
-import { isBoolean } from '@hemjs/notions';
-
-isBoolean(false);
-// => true
-isBoolean(0);
-// => false
-isBoolean(null);
-// => false
-```
-
-**Parameters:**
-
-- `value`: The value to be checked. Can be any data type.
-
-**Returns:**
-
-`true` if `value` is a boolean, otherwise `false`.
+The guards below have behavior worth knowing.
 
 ### `isClass`
 
-Determines whether a given value is a class. Native classes such as `Map` are indistinguishable from functions and return `false`.
-
-**Type:**
+Reads the function's source text, so it can only recognize classes written with the `class` keyword. Native classes such as `Map`, bound classes and classes compiled to ES5 return `false`.
 
 ```ts
-function isClass<T = unknown>(value: unknown): value is Class<T>;
-```
-
-**Example:**
-
-```ts
-import { isClass } from '@hemjs/notions';
-
 class Bar {}
 
 isClass(Bar);
 // => true
 isClass(new Bar());
 // => false
-isClass(0);
+isClass(Map);
 // => false
 ```
 
-**Parameters:**
+### `isDate`, `isMap` and `isSet`
 
-- `value`: The value to be checked. Can be any data type.
-
-**Returns:**
-
-`true` if `value` is a class, otherwise `false`.
-
-### `isDate`
-
-Determines whether a given value is a `Date`, including one from another realm. Invalid dates are still dates.
-
-**Type:**
+These recognize values from another realm, such as an iframe or `vm` context, where `instanceof` fails. They reject lookalikes such as `Object.create(Map.prototype)` and objects with a spoofed `Symbol.toStringTag`. Subclasses return `true`, and so do invalid dates.
 
 ```ts
-function isDate(value: unknown): value is Date;
-```
-
-**Example:**
-
-```ts
-import { isDate } from '@hemjs/notions';
-
-isDate(new Date());
+isDate(new Date('x'));
 // => true
-isDate(Date.now());
+isMap(Object.create(Map.prototype));
 // => false
 ```
-
-**Parameters:**
-
-- `value`: The value to be checked. Can be any data type.
-
-**Returns:**
-
-`true` if `value` is a `Date`, otherwise `false`.
-
-### `isDefined`
-
-Determines whether a given value is neither `null` nor `undefined`.
-
-**Type:**
-
-```ts
-function isDefined<T>(value: T): value is NonNullable<T>;
-```
-
-**Example:**
-
-```ts
-import { isDefined } from '@hemjs/notions';
-
-isDefined(0);
-// => true
-isDefined(null);
-// => false
-['a', null].filter(isDefined);
-// => ['a']
-```
-
-**Parameters:**
-
-- `value`: The value to be checked. Can be any data type.
-
-**Returns:**
-
-`true` if `value` is neither `null` nor `undefined`, otherwise `false`.
 
 ### `isEmpty`
 
-Determines whether a given value is considered empty.
-
-**Type:**
-
 ```ts
 function isEmpty(value: unknown, options?: IsEmptyOptions): boolean;
-
-interface IsEmptyOptions {
-  trimStrings?: boolean; // default: true
-  zeroIsEmpty?: boolean; // default: false
-  falseIsEmpty?: boolean; // default: false
-}
 ```
 
-**Empty Definitions:**
+| Value                                                       | Empty when                                                   |
+| ----------------------------------------------------------- | ------------------------------------------------------------ |
+| `null`, `undefined`                                         | Always                                                       |
+| String                                                      | `''`, or whitespace-only unless `trimStrings` is `false`     |
+| Number                                                      | `NaN`, or `0` and `-0` when `zeroIsEmpty` is `true`          |
+| Bigint                                                      | `0n` when `zeroIsEmpty` is `true`                            |
+| Boolean                                                     | `false` when `falseIsEmpty` is `true`                        |
+| Array                                                       | `length` is `0`                                              |
+| `ArrayBuffer`, `SharedArrayBuffer`, typed array, `DataView` | `byteLength` is `0`                                          |
+| `Map`, `Set`                                                | `size` is `0`                                                |
+| `Date`                                                      | The date is invalid                                          |
+| Plain object                                                | It has no own keys, including symbol and non-enumerable keys |
 
-- `null`: Returns `true` when a `null` value is given.
-- `undefined`: Returns `true` when an `undefined` value is given.
-- `string`: Returns `true` when an empty string `''` is given, or a string which contains only whitespace unless `trimStrings` is `false`.
-- `number`: Returns `true` for `NaN`, and for `0` when `zeroIsEmpty` is `true`.
-- `bigint`: Returns `true` for bigint zero (`0n`) when `zeroIsEmpty` is `true`.
-- `boolean`: Returns `true` for `false` when `falseIsEmpty` is `true`.
-- `array`: Returns `true` when the `length` is `0`. Entries are not inspected.
-- `binary data`: Returns `true` when the `byteLength` of an `ArrayBuffer`, `SharedArrayBuffer`, typed array or `DataView` is `0`.
-- `Map` / `Set`: Returns `true` when the `size` is `0`.
-- `Date`: Returns `true` for an invalid date.
-- `object`: Returns `true` for a plain object with no own keys, including symbol and non-enumerable keys. Values are not inspected.
-
-> Anything else (e.g. functions, symbols, class instances) is never treated as empty.
-
-**Example:**
+Anything else, including functions, symbols and class instances, is never empty. Array entries and object values are not inspected.
 
 ```ts
-import { isEmpty } from '@hemjs/notions';
-
-// Arrays
 isEmpty([]);
 // => true
 isEmpty([null]);
 // => false
-
-// Objects
-isEmpty({});
-// => true
 isEmpty({ a: null });
 // => false
-
-// Strings
-isEmpty('');
-// => true
-isEmpty('  ');
-// => true
-isEmpty('  ', { trimStrings: false });
-// => false
-isEmpty('hello');
-// => false
-
-// Collections
-isEmpty(new Map());
-// => true
-isEmpty(new Set([1]));
-// => false
-
-// Other Values
-isEmpty(null);
-// => true
-isEmpty(undefined);
-// => true
-isEmpty(NaN);
-// => true
-isEmpty(new Date('x'));
-// => true
-isEmpty(false);
-// => false
-isEmpty(false, { falseIsEmpty: true });
-// => true
 isEmpty(0);
 // => false
 isEmpty(0, { zeroIsEmpty: true });
 // => true
+isEmpty('  ', { trimStrings: false });
+// => false
 ```
 
-**Parameters:**
-
-- `value`: The value to be checked. Can be any data type.
-- `options`: Optional settings that tune what counts as empty.
-
-**Returns:**
-
-`true` if `value` is empty, otherwise `false`.
+See [`IsEmptyOptions`](#isemptyoptions) for the options.
 
 ### `isError`
 
-Determines whether a given value is an `Error`, including one from another realm.
-
-**Type:**
+Works across realms, and accepts `DOMException`, which covers the reason given by an aborted `fetch`. It uses the native `Error.isError` where available. On runtimes without it, an `Error` subclass with its own `Symbol.toStringTag` returns `false`.
 
 ```ts
-function isError(value: unknown): value is Error;
-```
-
-**Example:**
-
-```ts
-import { isError } from '@hemjs/notions';
-
 isError(new TypeError('x'));
 // => true
 isError({ message: 'x' });
 // => false
 ```
 
-**Parameters:**
+### `isObject` and `isPlainObject`
 
-- `value`: The value to be checked. Can be any data type.
+`isObject` returns `true` for any non-null object, including arrays, and `false` for functions. Functions are not primitives either, so `isObject` and `isPrimitive` can both return `false`.
 
-**Returns:**
-
-`true` if `value` is an `Error`, otherwise `false`.
-
-### `isFiniteNumber`
-
-Determines whether a given value is a finite number, which excludes `NaN` and `Infinity`.
-
-**Type:**
+`isPlainObject` is stricter. It accepts objects created by `{}`, `new Object()` or `Object.create(null)`, and rejects class instances, `Math`, `arguments` and objects with a custom `Symbol.toStringTag`.
 
 ```ts
-function isFiniteNumber(value: unknown): value is number;
-```
-
-**Example:**
-
-```ts
-import { isFiniteNumber } from '@hemjs/notions';
-
-isFiniteNumber(1);
-// => true
-isFiniteNumber(NaN);
-// => false
-isFiniteNumber(Infinity);
-// => false
-```
-
-**Parameters:**
-
-- `value`: The value to be checked. Can be any data type.
-
-**Returns:**
-
-`true` if `value` is a finite number, otherwise `false`.
-
-### `isFunction`
-
-Determines whether a given value is of type function. This includes classes, which throw when called without `new`.
-
-**Type:**
-
-```ts
-function isFunction(value: unknown): value is (...args: unknown[]) => unknown;
-```
-
-**Example:**
-
-```ts
-import { isFunction } from '@hemjs/notions';
-
-isFunction(() => {});
-// => true
-isFunction(Math.random);
-// => true
-isFunction(0);
-// => false
-```
-
-**Parameters:**
-
-- `value`: The value to be checked. Can be any data type.
-
-**Returns:**
-
-`true` if `value` is a function, otherwise `false`.
-
-### `isMap`
-
-Determines whether a given value is a `Map`, including one from another realm.
-
-**Type:**
-
-```ts
-function isMap<K = unknown, V = unknown>(value: unknown): value is Map<K, V>;
-```
-
-**Example:**
-
-```ts
-import { isMap } from '@hemjs/notions';
-
-isMap(new Map());
-// => true
-isMap(new Set());
-// => false
-```
-
-**Parameters:**
-
-- `value`: The value to be checked. Can be any data type.
-
-**Returns:**
-
-`true` if `value` is a `Map`, otherwise `false`.
-
-### `isNil`
-
-Determines whether a given value is nullish (null or undefined).
-
-**Type:**
-
-```ts
-function isNil(value: unknown): value is null | undefined;
-```
-
-**Example:**
-
-```ts
-import { isNil } from '@hemjs/notions';
-
-isNil(null);
-// => true
-isNil(undefined);
-// => true
-isNil(0);
-// => false
-```
-
-**Parameters:**
-
-- `value`: The value to be checked. Can be any data type.
-
-**Returns:**
-
-`true` if `value` is nullish, otherwise `false`.
-
-### `isNull`
-
-Determines whether a given value is exactly null.
-
-**Type:**
-
-```ts
-function isNull(value: unknown): value is null;
-```
-
-**Example:**
-
-```ts
-import { isNull } from '@hemjs/notions';
-
-isNull(null);
-// => true
-isNull(undefined);
-// => false
-isNull(0);
-// => false
-```
-
-**Parameters:**
-
-- `value`: The value to be checked. Can be any data type.
-
-**Returns:**
-
-`true` if `value` is null, otherwise `false`.
-
-### `isNumber`
-
-Determines whether a given value is of type number.
-
-**Type:**
-
-```ts
-function isNumber(value: unknown): value is number;
-```
-
-**Example:**
-
-```ts
-import { isNumber } from '@hemjs/notions';
-
-isNumber(10);
-// => true
-isNumber(Math.PI);
-// => true
-isNumber('10');
-// => false
-```
-
-**Parameters:**
-
-- `value`: The value to be checked. Can be any data type.
-
-**Returns:**
-
-`true` if `value` is a number, otherwise `false`.
-
-### `isObject`
-
-Determines whether a given value is of type object (excluding null).
-
-**Type:**
-
-```ts
-function isObject(value: unknown): value is object;
-```
-
-**Example:**
-
-```ts
-import { isObject } from '@hemjs/notions';
-
-isObject({});
-// => true
 isObject([]);
 // => true
-isObject(null);
+isObject(() => {});
 // => false
-```
-
-**Parameters:**
-
-- `value`: The value to be checked. Can be any data type.
-
-**Returns:**
-
-`true` if `value` is an object (excluding null), otherwise `false`.
-
-### `isPlainObject`
-
-Determines whether a given value is a plain object (i.e., an object whose prototype is `null` or sits at the root of the chain, such as `Object.prototype`).
-
-**Type:**
-
-```ts
-function isPlainObject(value: unknown): value is Record<Key, unknown>;
-```
-
-**Example:**
-
-```ts
-import { isPlainObject } from '@hemjs/notions';
-
 isPlainObject({});
 // => true
-isPlainObject([]);
-// => false
 isPlainObject(Object.create(null));
 // => true
-```
-
-**Parameters:**
-
-- `value`: The value to be checked. Can be any data type.
-
-**Returns:**
-
-`true` if `value` is a plain object, otherwise `false`.
-
-### `isPrimitive`
-
-Determines whether a given value is a primitive, meaning neither an object nor a function.
-
-**Type:**
-
-```ts
-function isPrimitive(value: unknown): value is Primitive;
-```
-
-**Example:**
-
-```ts
-import { isPrimitive } from '@hemjs/notions';
-
-isPrimitive('a');
-// => true
-isPrimitive(null);
-// => true
-isPrimitive({});
+isPlainObject(new Date());
 // => false
 ```
-
-**Parameters:**
-
-- `value`: The value to be checked. Can be any data type.
-
-**Returns:**
-
-`true` if `value` is a primitive, otherwise `false`.
 
 ### `isPromise`
 
-Determines whether a given value is a thenable, which is what `await` treats as a promise.
-
-**Type:**
+Checks for a callable `then`, which is what `await` treats as a promise. That is why it narrows to `PromiseLike<T>` rather than `Promise<T>`. A `then` getter that throws returns `false`.
 
 ```ts
-function isPromise<T = unknown>(value: unknown): value is PromiseLike<T>;
-```
-
-**Example:**
-
-```ts
-import { isPromise } from '@hemjs/notions';
-
 isPromise(Promise.resolve());
 // => true
 isPromise({ then() {} });
@@ -623,143 +190,13 @@ isPromise({});
 // => false
 ```
 
-**Parameters:**
+## Object helpers
 
-- `value`: The value to be checked. Can be any data type.
-
-**Returns:**
-
-`true` if `value` is a thenable, otherwise `false`.
-
-### `isSet`
-
-Determines whether a given value is a `Set`, including one from another realm.
-
-**Type:**
-
-```ts
-function isSet<T = unknown>(value: unknown): value is Set<T>;
-```
-
-**Example:**
-
-```ts
-import { isSet } from '@hemjs/notions';
-
-isSet(new Set());
-// => true
-isSet(new Map());
-// => false
-```
-
-**Parameters:**
-
-- `value`: The value to be checked. Can be any data type.
-
-**Returns:**
-
-`true` if `value` is a `Set`, otherwise `false`.
-
-### `isString`
-
-Determines whether a given value is of type string.
-
-**Type:**
-
-```ts
-function isString(value: unknown): value is string;
-```
-
-**Example:**
-
-```ts
-import { isString } from '@hemjs/notions';
-
-isString('hello');
-// => true
-isString(Symbol('hello'));
-// => false
-isString(10);
-// => false
-```
-
-**Parameters:**
-
-- `value`: The value to be checked. Can be any data type.
-
-**Returns:**
-
-`true` if `value` is a string, otherwise `false`.
-
-### `isSymbol`
-
-Determines whether a given value is of type symbol.
-
-**Type:**
-
-```ts
-function isSymbol(value: unknown): value is symbol;
-```
-
-**Example:**
-
-```ts
-import { isSymbol } from '@hemjs/notions';
-
-isSymbol(Symbol('hello'));
-// => true
-isSymbol('hello');
-// => false
-isSymbol(10);
-// => false
-```
-
-**Parameters:**
-
-- `value`: The value to be checked. Can be any data type.
-
-**Returns:**
-
-`true` if `value` is a symbol, otherwise `false`.
-
-### `isUndefined`
-
-Determines whether a given value is undefined.
-
-**Type:**
-
-```ts
-function isUndefined(value: unknown): value is undefined;
-```
-
-**Example:**
-
-```ts
-import { isUndefined } from '@hemjs/notions';
-
-isUndefined(undefined);
-// => true
-isUndefined(null);
-// => false
-isUndefined(0);
-// => false
-```
-
-**Parameters:**
-
-- `value`: The value to be checked. Can be any data type.
-
-**Returns:**
-
-`true` if `value` is undefined, otherwise `false`.
-
-## Object
+Both helpers return a new object and leave the source unchanged.
 
 ### `omit`
 
-Creates a new object with specific properties omitted from a source object. Only own enumerable properties are copied, including symbols. Inherited members such as class methods and non-enumerable properties such as `Error.message` are left out, so every property of the result is optional. Getters are read and their values copied, and `__proto__` keys are dropped.
-
-**Type:**
+Copies every property except the listed keys.
 
 ```ts
 function omit<T extends object, K extends keyof T>(
@@ -768,30 +205,16 @@ function omit<T extends object, K extends keyof T>(
 ): Partial<Omit<T, K>>;
 ```
 
-**Example:**
-
 ```ts
-import { omit } from '@hemjs/notions';
-
 const person = { name: 'Alice', age: 30, city: 'Nairobi' };
-const publicInfo = omit(person, ['age']);
-console.log(publicInfo); // Output: { name: 'Alice', city: 'Nairobi' }
+
+omit(person, ['age']);
+// => { name: 'Alice', city: 'Nairobi' }
 ```
-
-**Parameters:**
-
-- `obj`: The source object from which properties will be copied.
-- `exclusions`: An array of property keys to exclude from the new object.
-
-**Returns:**
-
-A new object containing the own enumerable properties of `obj`, except those listed in `exclusions` and `__proto__`.
 
 ### `pick`
 
-Creates a new object containing only the specified properties from a source object. Keys that are not own enumerable properties of the source, such as `Error.message`, are skipped, so every property of the result is optional. Getters are read and their values copied, and `__proto__` keys are dropped.
-
-**Type:**
+Copies only the listed keys.
 
 ```ts
 function pick<T extends object, K extends keyof T>(
@@ -800,27 +223,68 @@ function pick<T extends object, K extends keyof T>(
 ): Partial<Pick<T, K>>;
 ```
 
-**Example:**
-
 ```ts
-import { pick } from '@hemjs/notions';
-
 const person = { name: 'Alice', age: 30, city: 'Nairobi' };
-const nameAndAge = pick(person, ['name', 'age']);
-console.log(nameAndAge); // Output: { name: 'Alice', age: 30 }
+
+pick(person, ['name', 'age']);
+// => { name: 'Alice', age: 30 }
 ```
 
-**Parameters:**
+### Copying rules
 
-- `obj`: The source object from which properties will be copied.
-- `inclusions`: An array of property keys to include in the new object.
+`omit` and `pick` follow the same rules:
 
-**Returns:**
+- **Own enumerable properties only:** symbol keys are included. Inherited members such as class methods are not, and neither are non-enumerable properties such as `Error.message`.
+- **Optional results:** because of that rule, every property of the result is optional, so read it with `?.` or a check.
+- **No `__proto__`:** these keys are always dropped, so untrusted JSON can't set a prototype on the result or on anything it's merged into.
+- **Getters are read:** the value is copied rather than the getter, so a getter that throws aborts the call.
 
-A new object containing the properties listed in `inclusions` that are own enumerable properties of `obj`, except `__proto__`.
+```ts
+const person = { name: 'Alice', age: 30 };
+
+omit(person, ['age']).name?.toUpperCase();
+// => 'ALICE'
+```
+
+## Types
+
+### `Class`
+
+An instantiable class `T` with constructor parameters `Args`.
+
+```ts
+type Class<T, Args extends unknown[] = unknown[]> = {
+  prototype: Pick<T, keyof T>;
+  new (...args: Args): T;
+};
+```
+
+### `IsEmptyOptions`
+
+Options to tune what `isEmpty` considers empty.
+
+| Option         | Default | Effect                                 |
+| -------------- | ------- | -------------------------------------- |
+| `trimStrings`  | `true`  | Treat whitespace-only strings as empty |
+| `zeroIsEmpty`  | `false` | Treat `0`, `-0` and `0n` as empty      |
+| `falseIsEmpty` | `false` | Treat `false` as empty                 |
+
+### `Key`
+
+The keys an object can be indexed by.
+
+```ts
+type Key = string | number | symbol;
+```
+
+### `Primitive`
+
+A value that is neither an object nor a function.
+
+```ts
+type Primitive = bigint | boolean | null | number | string | symbol | undefined;
+```
 
 ## License
 
-This project is licensed under the **MIT license**.
-
-See [LICENSE](LICENSE) for more information.
+[MIT](LICENSE)

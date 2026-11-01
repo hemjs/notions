@@ -21,10 +21,7 @@ export interface IsEmptyOptions {
   falseIsEmpty?: boolean;
 }
 
-/**
- * Returns `true` if `value` carries the built-in `tag` and survives `check`,
- * which rejects lookalikes. Works across realms, unlike `instanceof`.
- */
+/** Returns `true` if `value` has the built-in `tag` and passes `check`. */
 function hasBrand(
   value: unknown,
   tag: string,
@@ -62,10 +59,7 @@ export function isBoolean(value: unknown): value is boolean {
   return typeof value === 'boolean';
 }
 
-/**
- * Returns `true` if `value` is a class, else `false`. Native classes such as
- * `Map` are indistinguishable from functions and return `false`.
- */
+/** Returns `true` if `value` is a class by its source, else `false`. */
 export function isClass<T = unknown>(value: unknown): value is Class<T> {
   return (
     typeof value === 'function' &&
@@ -73,14 +67,14 @@ export function isClass<T = unknown>(value: unknown): value is Class<T> {
   );
 }
 
-/** Returns `true` if `value` is a `Date`, else `false`. */
+/** Returns `true` if `value` is a `Date` from any realm, else `false`. */
 export function isDate(value: unknown): value is Date {
   return hasBrand(value, 'Date', (date: Date) =>
     Date.prototype.getTime.call(date),
   );
 }
 
-/** Returns `true` if `value` is neither `null` nor `undefined`, else `false`. */
+/** Returns `true` if `value` is not nullish, else `false`. */
 export function isDefined<T>(value: T): value is NonNullable<T> {
   return !isNil(value);
 }
@@ -94,7 +88,7 @@ export function isDefined<T>(value: T): value is NonNullable<T> {
  * - **bigint:** `0n` if `zeroIsEmpty`.
  * - **boolean:** `false` if `falseIsEmpty`.
  * - **array:** `length` is `0`.
- * - **typed array / `DataView` / `ArrayBuffer`:** `byteLength` is `0`.
+ * - **binary data:** `byteLength` is `0`.
  * - **`Map` / `Set`:** `size` is `0`.
  * - **`Date`:** invalid.
  * - **plain object:** no own keys, including symbols and non-enumerable keys.
@@ -175,17 +169,14 @@ export function isFiniteNumber(value: unknown): value is number {
   return Number.isFinite(value);
 }
 
-/**
- * Returns `true` if `value` is a function, else `false`. This includes classes,
- * which throw when called without `new`.
- */
+/** Returns `true` if `value` is a function or class, else `false`. */
 export function isFunction(
   value: unknown,
 ): value is (...args: unknown[]) => unknown {
   return typeof value === 'function';
 }
 
-/** Returns `true` if `value` is a `Map`, else `false`. */
+/** Returns `true` if `value` is a `Map` from any realm, else `false`. */
 export function isMap<K = unknown, V = unknown>(
   value: unknown,
 ): value is Map<K, V> {
@@ -204,12 +195,12 @@ export function isNull(value: unknown): value is null {
   return value === null;
 }
 
-/** Returns `true` if `value` is a number, else `false`. */
+/** Returns `true` if `value` is a number, including `NaN`, else `false`. */
 export function isNumber(value: unknown): value is number {
   return typeof value === 'number';
 }
 
-/** Returns `true` if `value` is an object, else `false`. */
+/** Returns `true` if `value` is a non-null object, else `false`. */
 export function isObject(value: unknown): value is object {
   return value !== null && typeof value === 'object';
 }
@@ -233,10 +224,7 @@ export function isPrimitive(value: unknown): value is Primitive {
   return !isObject(value) && !isFunction(value);
 }
 
-/**
- * Returns `true` if `value` is a thenable, which is what `await` treats as a
- * promise, else `false`.
- */
+/** Returns `true` if `value` is a thenable, else `false`. */
 export function isPromise<T = unknown>(
   value: unknown,
 ): value is PromiseLike<T> {
@@ -251,7 +239,7 @@ export function isPromise<T = unknown>(
   }
 }
 
-/** Returns `true` if `value` is a `Set`, else `false`. */
+/** Returns `true` if `value` is a `Set` from any realm, else `false`. */
 export function isSet<T = unknown>(value: unknown): value is Set<T> {
   return hasBrand(value, 'Set', (set: Set<unknown>) =>
     Set.prototype.has.call(set, undefined),
