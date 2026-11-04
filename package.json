@@ -1,6 +1,6 @@
 {
   "name": "@hemjs/notions",
-  "version": "2.0.0",
+  "version": "3.0.0",
   "description": "Type-safe utilities for values, objects, and more",
   "keywords": [
     "hemjs",
